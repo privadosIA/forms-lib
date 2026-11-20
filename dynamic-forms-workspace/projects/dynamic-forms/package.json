@@ -1,7 +1,7 @@
 {
   "name": "@core/dynamic-forms",
   "version": "2.19.1",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/privadosIA/forms-lib.git",

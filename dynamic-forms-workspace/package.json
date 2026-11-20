@@ -2,7 +2,7 @@
   "name": "dynamic-forms-workspace",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve demo-showcase",

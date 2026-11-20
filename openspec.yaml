@@ -15,7 +15,7 @@ info:
     Standalone Angular library that wraps @ngx-formly/core and renders
     reactive forms from JSON metadata. Consumers never touch Formly:
     they only deal with the contracts described in this file.
-  license: MIT
+  license: Apache-2.0
   copyright: "Copyright (c) 2026 Jesús Suero"
 
 # -----------------------------------------------------------------------------

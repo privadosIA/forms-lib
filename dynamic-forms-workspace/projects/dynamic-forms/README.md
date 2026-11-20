@@ -612,4 +612,4 @@ Also exported, in case you need them outside a form: `parseAmount`, `formatAmoun
 
 ## License
 
-[MIT](./LICENSE) — Copyright (c) 2026 Jesús Suero
+[Apache-2.0](./LICENSE) — Copyright (c) 2026 Jesús Suero

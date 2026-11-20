@@ -61,7 +61,7 @@ The links are to the public copies of these repositories. The third-party tools,
 
 ## License
 
-[MIT](LICENSE) — Copyright (c) 2026 Jesús Suero
+[Apache-2.0](LICENSE) — Copyright (c) 2026 Jesús Suero
 
 ## Maintenance
 

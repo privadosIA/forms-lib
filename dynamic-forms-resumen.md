@@ -114,4 +114,4 @@ Consumers add the same two lines (a token with `read:package` is enough) and the
 
 ## License
 
-MIT — Copyright (c) 2026 Jesús Suero
+Apache-2.0 — Copyright (c) 2026 Jesús Suero
