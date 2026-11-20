@@ -1,0 +1,45 @@
+{
+  "name": "dynamic-forms-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve demo-showcase",
+    "build": "npm run build:lib && npm run build:demo",
+    "build:lib": "ng build dynamic-forms",
+    "build:demo": "ng build demo-showcase",
+    "watch:lib": "ng build dynamic-forms --watch --configuration development",
+    "test": "ng test dynamic-forms --watch=false",
+    "test:ci": "ng test dynamic-forms --watch=false --coverage",
+    "lint": "ng lint",
+    "test:watch": "ng test dynamic-forms"
+  },
+  "dependencies": {
+    "@angular/animations": "^21.2.25",
+    "@angular/common": "^21.2.25",
+    "@angular/compiler": "^21.2.25",
+    "@angular/core": "^21.2.25",
+    "@angular/forms": "^21.2.25",
+    "@angular/platform-browser": "^21.2.25",
+    "@angular/platform-browser-dynamic": "^21.2.25",
+    "@angular/router": "^21.2.25",
+    "@ngx-formly/core": "^10.0.1",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.26",
+    "@angular/cli": "^21.2.26",
+    "@angular/compiler-cli": "^21.2.25",
+    "@vitest/coverage-v8": "^4.1.11",
+    "angular-eslint": "21.4.0",
+    "eslint": "^9.28.0",
+    "jsdom": "^30.1.2",
+    "ng-packagr": "^21.2.7",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.33.1",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,242 @@
+<div class="df-table">
+  @if (props.title) {
+    <div class="df-table__title">{{ props.title }}</div>
+  }
+  @if (props.description) {
+    <p class="df-table__description">{{ props.description }}</p>
+  }
+
+  @if (hasFilter || exportConfig) {
+    <div class="df-table__toolbar">
+      @if (hasFilter) {
+        <label class="df-table__filter">
+          <span>{{ props['filterLabel'] || texts.search }}</span>
+          <input type="search" class="df-table__search" [value]="filterText" (input)="onFilter($event)" />
+        </label>
+      }
+      @if (exportConfig) {
+        <button type="button" class="df-table__action df-table__export" [disabled]="exporting" (click)="exportCsv()">
+          {{ exporting ? texts.exporting : exportLabel }}
+        </button>
+      }
+    </div>
+  }
+  @if (exportFailed) {
+    <div class="df-table__status is-error" role="alert">{{ texts.exportFailed }}</div>
+  }
+
+  @if (loading) {
+    <div class="df-table__status" role="status">{{ texts.loading }}</div>
+  }
+
+  <div class="df-table__scroll" [attr.aria-busy]="loading" [class.is-loading]="loading">
+    <table class="df-table__table" [class.is-resized]="widths" [style.width]="tableWidth">
+      <colgroup>
+        @if (multiple) {
+          <col class="df-table__check-col" [style.width]="specialWidth('__check')" />
+        }
+        @for (col of columns; track col.key) {
+          <col [style.width]="colWidth(col)" />
+        }
+        @if (actions.length) {
+          <col [style.width]="specialWidth('__actions')" />
+        }
+      </colgroup>
+      <thead>
+        <tr>
+          @if (multiple) {
+            <th scope="col" class="df-table__check" [class.is-frozen]="hasFrozen" [style.left]="hasFrozen ? 'var(--df-frozen-check)' : null">
+              <input
+                type="checkbox"
+                [attr.aria-label]="texts.selectAll"
+                [checked]="allSelected"
+                [indeterminate]="someSelected"
+                [disabled]="!headerRowsAvailable"
+                (change)="toggleAll()" />
+            </th>
+          }
+          @for (col of columns; track col.key) {
+            <th
+              scope="col"
+              [attr.aria-sort]="ariaSort(col)"
+              [class.is-sortable]="col.sortable"
+              [class.is-frozen]="col.frozen"
+              [class.is-dragging]="dragKey === col.key"
+              [class.is-drop-target]="dropKey === col.key"
+              [attr.data-key]="col.key"
+              [attr.draggable]="reorderable ? 'true' : null"
+              [attr.title]="reorderable ? texts.reorderHint : null"
+              [style.left]="frozenLeft(col)"
+              (dragstart)="onDragStart($any($event), col)"
+              (dragover)="onDragOver($any($event), col)"
+              (drop)="onDrop($any($event), col)"
+              (dragend)="onDragEnd()"
+              (keydown)="onHeaderKey($event, col)">
+              <span class="df-table__head">
+                @if (col.sortable) {
+                  <button type="button" class="df-table__sort" (click)="sortBy(col, $event)">
+                    {{ col.label }}
+                    <span class="df-table__arrow" aria-hidden="true">{{ sortArrow(col) }}@if (sortPosition(col); as pos) {<sup>{{ pos }}</sup>}</span>
+                  </button>
+                } @else {
+                  {{ col.label }}
+                }
+                @if (pinnable) {
+                  <button
+                    type="button"
+                    class="df-table__pin"
+                    [class.is-pinned]="col.frozen"
+                    [attr.aria-pressed]="col.frozen"
+                    [attr.aria-label]="pinLabel(col)"
+                    [attr.title]="pinLabel(col)"
+                    (click)="togglePin(col)">
+                    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                      <path fill="currentColor" d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                    </svg>
+                  </button>
+                }
+              </span>
+              @if (resizable) {
+                <span
+                  class="df-table__resizer"
+                  role="separator"
+                  aria-orientation="vertical"
+                  tabindex="0"
+                  [attr.aria-label]="resizeLabel(col)"
+                  [attr.aria-valuenow]="widths ? widths[col.key] : null"
+                  (pointerdown)="onResizeStart($any($event), col)"
+                  (pointermove)="onResizeMove($any($event))"
+                  (pointerup)="onResizeEnd()"
+                  (pointercancel)="onResizeEnd()"
+                  (keydown)="onResizeKey($event, col)"
+                  (click)="$event.stopPropagation()"
+                  (dblclick)="resetWidths($event)"></span>
+              }
+            </th>
+          }
+          @if (actions.length) {
+            <th scope="col" class="df-table__actions-head">{{ texts.actions }}</th>
+          }
+        </tr>
+        @if (hasColumnFilters) {
+          <tr class="df-table__filters">
+            @if (multiple) {
+              <th [class.is-frozen]="hasFrozen" [style.left]="hasFrozen ? 'var(--df-frozen-check)' : null"></th>
+            }
+            @for (col of columns; track col.key) {
+              <th [class.is-frozen]="col.frozen" [style.left]="frozenLeft(col)">
+                @if (col.filter) {
+                  @if (filterKind(col) === 'select') {
+                    <select class="df-table__column-filter" [attr.aria-label]="filterAria(col)" (change)="onColumnFilter(col, $event)">
+                      <option value="" [selected]="!columnFilters[col.key]">{{ texts.all }}</option>
+                      @for (o of filterOptions(col); track o.value) {
+                        <option [value]="o.value" [selected]="columnFilters[col.key] === o.value">{{ o.label }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <input
+                      type="search"
+                      class="df-table__column-filter"
+                      [attr.aria-label]="filterAria(col)"
+                      [value]="columnFilters[col.key] ?? ''"
+                      (input)="onColumnFilter(col, $event)" />
+                  }
+                }
+              </th>
+            }
+            @if (actions.length) {
+              <th></th>
+            }
+          </tr>
+        }
+      </thead>
+      <tbody>
+        @for (row of visibleRows; track $index) {
+          <tr
+            [class.is-selectable]="selectable && rowSelectable(row)"
+            [class.is-selected]="isSelected(row)"
+            [attr.aria-selected]="selectable && rowSelectable(row) ? isSelected(row) : null"
+            [attr.tabindex]="selectable && rowSelectable(row) ? 0 : null"
+            (mousedown)="onRowMouseDown($event)"
+            (click)="toggle(row, $event)"
+            (keydown.enter)="toggle(row)"
+            (keydown.space)="$event.preventDefault(); toggle(row)">
+            @if (multiple) {
+              <td class="df-table__check" [class.is-frozen]="hasFrozen" [style.left]="hasFrozen ? 'var(--df-frozen-check)' : null">
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="texts.selectRow"
+                  [checked]="isSelected(row)"
+                  tabindex="-1"
+                  [disabled]="!rowSelectable(row)"
+                  (click)="$event.stopPropagation(); toggle(row, $event)" />
+              </td>
+            }
+            @for (col of columns; track col.key) {
+              <td [attr.data-type]="col.type" [class.is-frozen]="col.frozen" [style.left]="frozenLeft(col)">@if (cellTemplate(col); as tpl) {<ng-container *ngTemplateOutlet="tpl; context: cellContext(row, col)" />} @else if (col.html) {<span [innerHTML]="html(row, col)"></span>} @else if (col.type === 'badge') {@if (text(row, col); as label) {<span [class]="badgeClass(row, col)">{{ label }}</span>}} @else if (col.type === 'link' && href(row, col); as target) {<a [attr.href]="target" (click)="onLink($any($event), row, col)">{{ text(row, col) }}</a>} @else {{{ text(row, col) }}}</td>
+            }
+            @if (actions.length) {
+              <td class="df-table__actions">
+                @for (action of actions; track action.name) {
+                  @if (actionVisible(row, action)) {
+                    <button
+                      type="button"
+                      class="df-table__action"
+                      [class.is-icon]="action.icon"
+                      [disabled]="actionDisabled(row, action)"
+                      [attr.title]="action.tooltip || (action.icon ? action.label : null)"
+                      [attr.aria-label]="action.icon ? action.label : null"
+                      (click)="$event.stopPropagation(); act(row, action)">
+                      @if (!action.icon) {
+                        {{ action.label }}
+                      } @else if (iconPath(action); as path) {
+                        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" [attr.d]="path" /></svg>
+                      } @else {
+                        <span aria-hidden="true">{{ action.icon }}</span>
+                      }
+                    </button>
+                  }
+                }
+              </td>
+            }
+          </tr>
+        } @empty {
+          @if (!loading) {
+            <tr class="df-table__empty" [class.is-error]="failed">
+              <td [attr.colspan]="columns.length + (actions.length ? 1 : 0) + (multiple ? 1 : 0)">
+                @if (failed) {
+                  {{ errorMessage }}
+                  <button type="button" class="df-table__action df-table__retry" (click)="reload()">{{ texts.retry }}</button>
+                } @else {
+                  @if (filtering && !waiting) {
+                    {{ noResultsText }}
+                  } @else if (emptyTemplate; as tpl) {
+                    <ng-container *ngTemplateOutlet="tpl; context: { $implicit: tableId }" />
+                  } @else {
+                    {{ emptyMessage }}
+                  }
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (pageSize) {
+    <div class="df-table__pager">
+      <label class="df-table__page-size">
+        <span>{{ texts.rowsPerPage }}</span>
+        <select (change)="onPageSize($event)">
+          @for (n of pageSizeOptions; track n) {
+            <option [value]="n" [selected]="n === pageSize">{{ n }}</option>
+          }
+        </select>
+      </label>
+      <span class="df-table__range" aria-live="polite">{{ range }}</span>
+      <button type="button" class="df-table__page" [disabled]="currentPage === 0" (click)="goTo(currentPage - 1)" [attr.aria-label]="texts.previousPage">‹</button>
+      <button type="button" class="df-table__page" [disabled]="currentPage >= pageCount - 1" (click)="goTo(currentPage + 1)" [attr.aria-label]="texts.nextPage">›</button>
+    </div>
+  }
+</div>

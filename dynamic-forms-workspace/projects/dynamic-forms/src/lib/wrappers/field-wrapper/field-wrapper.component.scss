@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+.df-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: var(--df-field-gap);
+
+  &--disabled {
+    opacity: 0.65;
+  }
+}
+
+.df-label {
+  font-size: var(--df-label-size);
+  font-weight: 600;
+  color: var(--df-color-text);
+}
+
+.df-required {
+  color: var(--df-color-danger);
+  margin-left: 0.15rem;
+}
+
+.df-description {
+  font-size: 0.8rem;
+  color: var(--df-color-muted);
+}
+
+.df-error {
+  font-size: 0.8rem;
+  color: var(--df-color-danger);
+}

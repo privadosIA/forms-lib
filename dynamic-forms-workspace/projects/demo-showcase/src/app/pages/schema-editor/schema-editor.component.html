@@ -1,0 +1,134 @@
+<div class="editor">
+  <header class="editor__toolbar">
+    <label class="editor__preset">
+      Ejemplo
+      <select (change)="loadPreset($any($event.target).value)">
+        @for (p of presets; track p.id) {
+          <option [value]="p.id" [selected]="p.id === presetId()">{{ p.label }}</option>
+        }
+      </select>
+    </label>
+    <button type="button" class="btn" (click)="resetModel()">Vaciar datos</button>
+    <span class="editor__state" [class.is-invalid]="!valid()" role="status">
+      {{ valid() ? 'Esquema válido' : 'Esquema con incidencias' }}
+    </span>
+  </header>
+
+  <div class="editor__body">
+    <section class="editor__preview" aria-label="Vista previa">
+      @if (!valid()) {
+        <div class="editor__alert" role="alert">
+          <strong>La vista previa muestra la última versión válida.</strong>
+          <ul>
+            @if (jsonError(); as e) {
+              <li>{{ e }}</li>
+            }
+            @for (issue of issues(); track $index) {
+              <li><code>{{ issue.path }}</code> {{ issue.message }}</li>
+            }
+          </ul>
+        </div>
+      }
+      @if (rendered(); as s) {
+        <div class="editor__form">
+          <dynamic-form
+            [schema]="s"
+            [(model)]="model"
+            (statusChange)="status.set($event)"
+            (formSubmit)="lastSubmit.set($event.model)">
+          </dynamic-form>
+        </div>
+      }
+    </section>
+
+    <aside class="editor__panel">
+      <div class="tabs" role="tablist" aria-label="Edición del esquema">
+        @for (t of ['campos', 'json', 'modelo']; track t) {
+          <button
+            type="button"
+            role="tab"
+            class="tabs__tab"
+            [class.is-active]="tab() === t"
+            [attr.aria-selected]="tab() === t"
+            (click)="tab.set($any(t))">
+            {{ t === 'campos' ? 'Campos' : t === 'json' ? 'JSON' : 'Modelo' }}
+          </button>
+        }
+      </div>
+
+      @switch (tab()) {
+        @case ('campos') {
+          <div class="tree">
+            <div class="tree__actions">
+              <button type="button" class="btn btn--small" (click)="addField()">+ Campo</button>
+              <button type="button" class="btn btn--small" (click)="addGroup()">+ Grupo</button>
+              <button type="button" class="btn btn--small" (click)="addArray()">+ Lista</button>
+              <button type="button" class="btn btn--small" (click)="addTable()">+ Tabla</button>
+              <span class="tree__hint">Se añade en el grupo o la lista seleccionados, o detrás del campo.</span>
+            </div>
+            <ul class="tree__list">
+              <li class="tree__row" [class.is-selected]="isSelected(null)">
+                <button type="button" class="tree__label" (click)="select(null)">
+                  <span class="badge badge--form">form</span>
+                  <span class="tree__title">{{ draft().title || 'Formulario' }}</span>
+                  <code>{{ draft().id }}</code>
+                </button>
+              </li>
+              @for (row of rows(); track pathKey(row.path)) {
+                @let info = describe(row.node);
+                <li class="tree__row" [class.is-selected]="isSelected(row.path)" [style.padding-left.rem]="0.5 + (row.depth + 1) * 1.1">
+                  <button type="button" class="tree__label" (click)="select(row.path)">
+                    <span class="badge" [class.badge--group]="info.badge === 'grupo' || info.badge === 'lista' || info.badge === 'tabla'">{{ info.badge }}</span>
+                    <span class="tree__title">{{ info.title }}</span>
+                    <code>{{ info.name }}</code>
+                  </button>
+                  <span class="tree__tools">
+                    <button type="button" class="icon" title="Subir" [attr.aria-label]="'Subir ' + info.name" (click)="move(row.path, -1)">↑</button>
+                    <button type="button" class="icon" title="Bajar" [attr.aria-label]="'Bajar ' + info.name" (click)="move(row.path, 1)">↓</button>
+                    <button type="button" class="icon icon--danger" title="Eliminar" [attr.aria-label]="'Eliminar ' + info.name" (click)="remove(row.path)">✕</button>
+                  </span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div class="props">
+            @for (p of [panel()]; track p.key) {
+              <dynamic-form
+                [schema]="p.schema"
+                [model]="p.model"
+                [showDefaultActions]="false"
+                (valueChange)="onPanelChange($event)">
+              </dynamic-form>
+            }
+          </div>
+        }
+
+        @case ('json') {
+          <div class="json">
+            <p class="json__hint">Se aplica al dejar de escribir. Lo que no se pueda editar en <em>Campos</em> (lógica, validadores…) se cambia aquí.</p>
+            <textarea
+              class="json__area"
+              spellcheck="false"
+              aria-label="Esquema en JSON"
+              [class.is-invalid]="jsonError()"
+              [value]="jsonText()"
+              (input)="onJsonInput($any($event.target).value)"
+              (keydown.tab)="insertTab($event)"></textarea>
+            @if (jsonError(); as e) {
+              <p class="json__error" role="alert">{{ e }}</p>
+            }
+            <div class="json__actions">
+              <button type="button" class="btn btn--small" (click)="formatJson()" [disabled]="!!jsonError()">Formatear</button>
+              <button type="button" class="btn btn--small" (click)="copyJson()">Copiar</button>
+            </div>
+          </div>
+        }
+
+        @case ('modelo') {
+          <app-model-viewer [model]="model()" [status]="status()" [lastSubmit]="lastSubmit()"></app-model-viewer>
+        }
+      }
+    </aside>
+  </div>
+</div>

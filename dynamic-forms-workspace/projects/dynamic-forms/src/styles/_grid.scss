@@ -1,0 +1,59 @@
+// Rejilla de 12 columnas aplicada a los nodos de Formly (fieldGroupClassName / className).
+// Es global porque formly-group/formly-field viven fuera del encapsulado de los componentes.
+.df-form {
+  container: df-form / inline-size;
+
+  .df-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 var(--df-grid-gap);
+    min-width: 0;
+  }
+
+  // Fila de una lista repetible con display "table": las columnas las fija --df-table-cols (la pone df-repeat).
+  .df-table-row {
+    display: grid;
+    grid-template-columns: var(--df-table-cols);
+    gap: 0 var(--df-grid-gap);
+    min-width: 0;
+  }
+
+  @for $i from 1 through 12 {
+    .df-col-#{$i} {
+      grid-column: span #{$i};
+      min-width: 0;
+    }
+    .df-order-#{$i} {
+      order: #{$i};
+    }
+  }
+
+  formly-field {
+    display: block;
+    min-width: 0;
+  }
+
+  .df-hidden-slot {
+    display: none;
+  }
+
+  // Depende del ancho del propio formulario (no de la ventana): un formulario en un panel estrecho también se apila.
+  @container df-form (max-width: 640px) {
+    .df-grid > formly-field {
+      grid-column: span 12;
+    }
+
+    .df-table-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .df-table-row > formly-field::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: var(--df-label-size);
+      font-weight: 600;
+      color: var(--df-color-text);
+    }
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "version": "1.0",
+  "id": "tablas",
+  "title": "Tablas de datos",
+  "description": "Escenario 5: tablas de solo lectura cuyos datos llegan de un servicio. Pueden traerlo todo y paginar en el cliente, o pedir cada página al servidor; la tercera lee las filas del modelo.",
+  "fields": [
+    {
+      "type": "table",
+      "id": "clientePaginando",
+      "title": "Paginación en el cliente",
+      "description": "El servicio (GET /api/expedientes) devuelve las 137 filas de una vez; la tabla filtra, ordena y pagina sin volver a llamar.",
+      "source": {
+        "endpoint": "/api/expedientes",
+        "mode": "client"
+      },
+      "filter": true,
+      "pageSize": 5,
+      "pageSizeOptions": [
+        5,
+        10,
+        25
+      ],
+      "selectable": true,
+      "sort": {
+        "key": "fecha",
+        "direction": "desc"
+      },
+      "actions": [
+        {
+          "name": "ver",
+          "label": "Ver"
+        },
+        {
+          "name": "descargar",
+          "label": "Descargar"
+        }
+      ],
+      "columns": [
+        {
+          "key": "numero",
+          "label": "Expediente",
+          "col": 2
+        },
+        {
+          "key": "asunto",
+          "label": "Asunto",
+          "col": 4
+        },
+        {
+          "key": "fecha",
+          "label": "Fecha",
+          "type": "datetime",
+          "col": 2
+        },
+        {
+          "key": "estado",
+          "label": "Estado",
+          "type": "map",
+          "map": {
+            "P": "Pendiente",
+            "A": "Aprobado",
+            "R": "Rechazado"
+          },
+          "col": 2
+        },
+        {
+          "key": "importe",
+          "label": "Importe",
+          "type": "currency",
+          "col": 2
+        },
+        {
+          "key": "urgente",
+          "label": "Urgente",
+          "type": "boolean",
+          "sortable": false,
+          "col": 1
+        }
+      ]
+    },
+    {
+      "key": "estado",
+      "type": "select",
+      "label": "Estado de los expedientes",
+      "defaultValue": "todos",
+      "description": "Es un parámetro de la tabla de abajo (source.dependsOn): al cambiarlo se vuelve a pedir la primera página.",
+      "options": [
+        {
+          "value": "todos",
+          "label": "Todos"
+        },
+        {
+          "value": "P",
+          "label": "Pendientes"
+        },
+        {
+          "value": "A",
+          "label": "Aprobados"
+        },
+        {
+          "value": "R",
+          "label": "Rechazados"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": "servidorPaginando",
+      "title": "Paginación en el servidor",
+      "description": "Cada página, orden y búsqueda es una llamada a GET /api/expedientes/paginado que devuelve { rows, total }. La búsqueda espera a que dejes de escribir.",
+      "source": {
+        "endpoint": "/api/expedientes/paginado",
+        "mode": "server",
+        "dependsOn": [
+          "estado"
+        ]
+      },
+      "filter": true,
+      "pageSize": 5,
+      "pageSizeOptions": [
+        5,
+        10,
+        25
+      ],
+      "sort": {
+        "key": "numero",
+        "direction": "asc"
+      },
+      "columns": [
+        {
+          "key": "numero",
+          "label": "Expediente",
+          "col": 2
+        },
+        {
+          "key": "asunto",
+          "label": "Asunto",
+          "col": 4
+        },
+        {
+          "key": "fecha",
+          "label": "Fecha",
+          "type": "datetime",
+          "col": 2
+        },
+        {
+          "key": "estado",
+          "label": "Estado",
+          "type": "map",
+          "map": {
+            "P": "Pendiente",
+            "A": "Aprobado",
+            "R": "Rechazado"
+          },
+          "col": 2
+        },
+        {
+          "key": "importe",
+          "label": "Importe",
+          "type": "currency",
+          "col": 2
+        },
+        {
+          "key": "urgente",
+          "label": "Urgente",
+          "type": "boolean",
+          "sortable": false,
+          "col": 1
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": "errorDemo",
+      "title": "Servicio que falla",
+      "description": "Muestra el mensaje de error y deja reintentar.",
+      "source": {
+        "endpoint": "/api/expedientes/error"
+      },
+      "errorMessage": "El servicio de expedientes no responde",
+      "columns": [
+        {
+          "key": "numero",
+          "label": "Expediente"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": "representantes",
+      "title": "Filas desde el modelo",
+      "description": "Sin servicio: las filas vienen de la propiedad «representantes» del modelo (dataKey), que aparece al cargarla y se actualiza si cambia. Las columnas «Estado» y «Ficha» usan html: true (insignias df-badge y enlaces).",
+      "dataKey": "representantes",
+      "emptyMessage": "Aún no se han cargado representantes",
+      "actions": [
+        {
+          "name": "editar",
+          "label": "Editar"
+        }
+      ],
+      "columns": [
+        {
+          "key": "titular.nombre",
+          "label": "Nombre"
+        },
+        {
+          "key": "titular.nif",
+          "label": "NIF"
+        },
+        {
+          "key": "desde",
+          "label": "Desde",
+          "type": "datetime"
+        },
+        {
+          "key": "vigente",
+          "label": "Vigente",
+          "type": "boolean"
+        },
+        {
+          "key": "estado",
+          "label": "Estado",
+          "html": true,
+          "filter": true
+        },
+        {
+          "key": "ficha",
+          "label": "Ficha",
+          "html": true,
+          "sortable": false
+        }
+      ]
+    }
+  ]
+}

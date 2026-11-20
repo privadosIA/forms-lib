@@ -1,0 +1,13 @@
+<div class="shell">
+  <aside class="shell__nav">
+    <h1 class="shell__brand">&#64;core/dynamic-forms</h1>
+    <nav>
+      @for (link of links; track link.path) {
+        <a [routerLink]="link.path" routerLinkActive="is-active" class="shell__link">{{ link.label }}</a>
+      }
+    </nav>
+  </aside>
+  <main class="shell__content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

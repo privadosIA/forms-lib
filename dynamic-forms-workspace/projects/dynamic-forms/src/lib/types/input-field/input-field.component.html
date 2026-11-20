@@ -1,0 +1,25 @@
+@if (inputType === 'number') {
+  <input
+    type="number"
+    class="df-control"
+    [formControl]="formControl"
+    [formlyAttributes]="field"
+    [readonly]="props.readonly === true"
+    [attr.min]="props.min"
+    [attr.max]="props.max"
+    [attr.step]="props['step']"
+    [attr.aria-invalid]="showError" />
+} @else {
+  <input
+    [type]="inputType"
+    class="df-control"
+    [formControl]="formControl"
+    [formlyAttributes]="field"
+    [readonly]="props.readonly === true"
+    [attr.minlength]="props.minLength"
+    [attr.maxlength]="props.maxLength"
+    [dfMaxLength]="props.maxLength"
+    [dfMaxLengthMode]="mode"
+    [attr.autocomplete]="props['autocomplete']"
+    [attr.aria-invalid]="showError" />
+}

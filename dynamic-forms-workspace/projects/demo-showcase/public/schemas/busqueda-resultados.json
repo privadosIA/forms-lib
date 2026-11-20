@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "id": "busquedaResultados",
+  "fields": [
+    {
+      "type": "table",
+      "id": "resultados",
+      "title": "Resultados",
+      "description": "Sus parámetros (q, estado) no son campos de este esquema: source.externalParams los lee del modelo que rellena el botón. requireParams: false deja buscar sin texto. Tiene filtros en Asunto y Urgente, selección múltiple (que sobrevive a la paginación gracias a selectionKey) exportación a CSV y las columnas Expediente y Asunto fijas (frozen) y un botón en cada cabecera para fijar o soltar columnas (pinnableColumns). Recuerda orden, filtros, filas por página columnas fijadas y orden de columnas (arrastrando la cabecera, reorderableColumns) anchos (resizableColumns) y orden por varias columnas con Mayús+clic (multiSort) mientras dure la pestaña (persistState).",
+      "selectable": "multiple",
+      "pinnableColumns": true,
+      "reorderableColumns": true,
+      "resizableColumns": true,
+      "multiSort": true,
+      "persistState": "session",
+      "selectionKey": "numero",
+      "exportCsv": { "filename": "expedientes" },
+      "source": {
+        "endpoint": "/api/expedientes/paginado",
+        "mode": "server",
+        "dependsOn": ["q", "estado"],
+        "externalParams": true,
+        "requireParams": false
+      },
+      "pageSize": 5,
+      "pageSizeOptions": [5, 10, 25],
+      "sort": { "key": "numero", "direction": "asc" },
+      "columns": [
+        { "key": "numero", "label": "Expediente", "col": 2, "frozen": true },
+        { "key": "asunto", "label": "Asunto", "col": 4, "filter": true, "frozen": true },
+        { "key": "fecha", "label": "Fecha", "type": "datetime", "col": 2 },
+        { "key": "estado", "label": "Estado", "type": "map", "map": { "P": "Pendiente", "A": "Aprobado", "R": "Rechazado" }, "col": 2 },
+        { "key": "importe", "label": "Importe", "type": "currency", "col": 2 },
+        { "key": "urgente", "label": "Urgente", "type": "boolean", "sortable": false, "filter": true, "col": 1 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+<form [id]="formId()" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <ng-content select="[dfHeader]"></ng-content>
+
+  @if (title()) {
+    <header class="df-form__header">
+      <h2 class="df-form__title">{{ title() }}</h2>
+      @if (description()) {
+        <p class="df-form__description">{{ description() }}</p>
+      }
+    </header>
+  }
+
+  <formly-form
+    [form]="form"
+    [fields]="fields()"
+    [model]="model()"
+    [options]="options"
+    (modelChange)="onModelChange($event)">
+  </formly-form>
+
+  <footer class="df-form__actions">
+    <ng-content select="[dfActions]"></ng-content>
+    @if (showDefaultActions()) {
+      <button type="submit" class="df-btn df-btn--primary" [disabled]="form.pending">
+        {{ submitLabel() }}
+      </button>
+    }
+  </footer>
+</form>

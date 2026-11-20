@@ -1,0 +1,23 @@
+@if (multiple) {
+  <select
+    multiple
+    class="df-control df-select df-select--multiple"
+    [formControl]="formControl"
+    [formlyAttributes]="field"
+    [attr.aria-invalid]="showError">
+    @for (opt of options$ | async; track opt.value) {
+      <option [ngValue]="opt.value" [disabled]="opt.disabled === true">{{ opt.label }}</option>
+    }
+  </select>
+} @else {
+  <select
+    class="df-control df-select"
+    [formControl]="formControl"
+    [formlyAttributes]="field"
+    [attr.aria-invalid]="showError">
+    <option [ngValue]="placeholderValue">{{ props.placeholder || '— Selecciona —' }}</option>
+    @for (opt of options$ | async; track opt.value) {
+      <option [ngValue]="opt.value" [disabled]="opt.disabled === true">{{ opt.label }}</option>
+    }
+  </select>
+}

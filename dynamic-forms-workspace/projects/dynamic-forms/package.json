@@ -1,0 +1,30 @@
+{
+  "name": "@core/dynamic-forms",
+  "version": "2.19.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/privadosIA/forms-lib.git",
+    "directory": "dynamic-forms-workspace/projects/dynamic-forms"
+  },
+  "homepage": "https://github.com/privadosIA/forms-lib#readme",
+  "bugs": {
+    "url": "https://github.com/privadosIA/forms-lib/issues"
+  },
+  "peerDependencies": {
+    "@angular/common": "^21.0.0 || ^22.0.0",
+    "@angular/core": "^21.0.0 || ^22.0.0",
+    "@angular/forms": "^21.0.0 || ^22.0.0",
+    "@ngx-formly/core": "^10.0.0 || ^11.0.0",
+    "rxjs": "^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@ngx-formly/material": {
+      "optional": true
+    },
+    "@ngx-formly/bootstrap": {
+      "optional": true
+    }
+  },
+  "sideEffects": false
+}

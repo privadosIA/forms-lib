@@ -1,0 +1,13 @@
+@use '../../../styles/control-base' as *;
+
+:host {
+  display: block;
+}
+
+.df-control {
+  @include df-control-base;
+}
+
+.df-select--multiple {
+  min-height: 7rem;
+}

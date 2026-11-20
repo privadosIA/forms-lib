@@ -1,0 +1,68 @@
+{
+  "version": "1.0",
+  "id": "pedido",
+  "title": "Pedido",
+  "description": "Escenario 4: listas repetibles. Una tabla de líneas con totales y una lista de contactos en tarjetas, con reglas que miran la propia fila (./campo) y la raíz del formulario.",
+  "layout": { "columns": 2 },
+  "fields": [
+    { "key": "cliente", "type": "text", "label": "Cliente", "validation": { "required": true } },
+    { "key": "aplicaDescuento", "type": "checkbox", "label": "Aplicar descuento por volumen" },
+    {
+      "type": "array",
+      "key": "lineas",
+      "title": "Líneas del pedido",
+      "description": "Disposición tabla. Con 10 o más unidades el motivo del descuento es obligatorio (regla ./cantidad), pero solo si arriba se marca el descuento (regla de la raíz).",
+      "display": "table",
+      "itemLabel": "Línea",
+      "addLabel": "Añadir línea",
+      "minItems": 1,
+      "maxItems": 6,
+      "totals": [
+        { "label": "Líneas", "op": "count" },
+        { "label": "Unidades", "op": "sum", "field": "cantidad" },
+        { "label": "Importe", "op": "sum", "field": "precio" }
+      ],
+      "fields": [
+        { "key": "concepto", "type": "text", "label": "Concepto", "layout": { "col": 5 }, "validation": { "required": true, "maxLength": 40 } },
+        { "key": "cantidad", "type": "number", "label": "Cantidad", "layout": { "col": 2 }, "defaultValue": 1, "validation": { "required": true, "min": 1 } },
+        { "key": "precio", "type": "currency", "label": "Precio", "layout": { "col": 3 }, "validation": { "required": true }, "props": { "amountInWords": false } },
+        {
+          "key": "motivoDescuento",
+          "type": "text",
+          "label": "Motivo del descuento",
+          "layout": { "col": 4 },
+          "logic": {
+            "requiredWhen": {
+              "all": [
+                { "field": "aplicaDescuento", "operator": "truthy" },
+                { "field": "./cantidad", "operator": "gte", "value": 10 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "array",
+      "key": "contactos",
+      "title": "Personas de contacto",
+      "description": "Disposición filas. El cargo solo aparece en la fila marcada como principal.",
+      "display": "rows",
+      "itemLabel": "Contacto",
+      "addLabel": "Añadir contacto",
+      "columns": 2,
+      "maxItems": 3,
+      "fields": [
+        { "key": "nombre", "type": "text", "label": "Nombre", "validation": { "required": true } },
+        { "key": "telefono", "type": "text", "label": "Teléfono", "validation": { "validators": [{ "name": "phoneES" }] } },
+        { "key": "principal", "type": "checkbox", "label": "Contacto principal" },
+        {
+          "key": "cargo",
+          "type": "text",
+          "label": "Cargo",
+          "logic": { "showWhen": { "field": "./principal", "operator": "truthy" } }
+        }
+      ]
+    }
+  ]
+}

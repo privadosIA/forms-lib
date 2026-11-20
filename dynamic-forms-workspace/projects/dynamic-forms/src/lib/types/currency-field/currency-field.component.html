@@ -1,0 +1,18 @@
+<input
+  #input
+  type="text"
+  inputmode="decimal"
+  autocomplete="off"
+  class="df-control df-currency"
+  [formlyAttributes]="field"
+  [disabled]="formControl.disabled"
+  [readonly]="props.readonly === true"
+  [attr.placeholder]="props.placeholder"
+  [attr.aria-invalid]="showError"
+  [attr.aria-describedby]="words ? id + '-words' : null"
+  (focus)="onFocus()"
+  (input)="onInput(input.value)"
+  (blur)="onBlur()" />
+@if (words) {
+  <small class="df-currency__words" [id]="id + '-words'">{{ words }}</small>
+}

@@ -1,0 +1,43 @@
+<div class="page">
+  <div class="page__form">
+    @if (schema(); as s) {
+      <dynamic-form
+        [schema]="s"
+        [(model)]="model"
+        [showDefaultActions]="false"
+        (tableAction)="onAction($event)"
+        (tableSelect)="onSelect($event)"
+        (statusChange)="status.set($event)">
+        <div dfActions class="actions">
+          <button type="button" class="btn" (click)="loadRepresentantes()">Cargar representantes</button>
+          <button type="button" class="btn" (click)="clearRepresentantes()">Vaciar</button>
+        </div>
+      </dynamic-form>
+    } @else {
+      <p>Cargando esquema…</p>
+    }
+
+    <h2 class="search-title">Búsqueda con botón</h2>
+    @if (criteriosSchema(); as c) {
+      <dynamic-form [schema]="c" submitLabel="Buscar" (formSubmit)="buscar($event)"></dynamic-form>
+    }
+    @if (resultadosSchema(); as r) {
+      <dynamic-form [schema]="r" [model]="criterios()" [showDefaultActions]="false" (tableSelect)="onSelect($event)"></dynamic-form>
+    }
+  </div>
+  <aside class="page__side">
+    <section class="events" aria-live="polite">
+      <h3>Eventos de las tablas</h3>
+      @if (events().length) {
+        <ul>
+          @for (e of events(); track $index) {
+            <li><code>{{ e }}</code></li>
+          }
+        </ul>
+      } @else {
+        <p class="events__empty">Pulsa una acción o selecciona una fila.</p>
+      }
+    </section>
+    <app-model-viewer [model]="model()" [status]="status()" [lastSubmit]="null"></app-model-viewer>
+  </aside>
+</div>

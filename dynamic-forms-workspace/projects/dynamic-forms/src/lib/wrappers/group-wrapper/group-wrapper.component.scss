@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+.df-group {
+  border: 1px solid var(--df-color-border);
+  border-radius: var(--df-radius);
+  padding: 1rem 1.25rem 0.25rem;
+  margin: 0 0 var(--df-field-gap);
+  min-width: 0;
+
+  &__title {
+    padding: 0 0.5rem;
+    font-weight: 600;
+    color: var(--df-color-text);
+  }
+
+  &__description {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--df-color-muted);
+  }
+}

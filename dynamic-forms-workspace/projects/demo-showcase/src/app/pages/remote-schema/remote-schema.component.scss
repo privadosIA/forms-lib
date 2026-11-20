@@ -1,0 +1,19 @@
+@use '../page-layout' as *;
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-family: monospace;
+}
+
+.is-active {
+  background: #ddf4ff;
+  border-color: #54aeff;
+}
+
+.error {
+  color: #cf222e;
+}

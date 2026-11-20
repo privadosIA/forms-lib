@@ -1,0 +1,18 @@
+// Tema de la librería. En una app real: @use '@core/dynamic-forms/styles/plain';
+// Para cambiar a material/bootstrap: @use '@core/dynamic-forms/styles/material';
+@use 'plain';
+
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #1f2328;
+  background: #f6f8fa;
+}
+
+body {
+  margin: 0;
+}
+
+// Ejemplo de sobrescritura de tokens desde la app consumidora
+.df-form {
+  --df-color-primary: #0969da;
+}

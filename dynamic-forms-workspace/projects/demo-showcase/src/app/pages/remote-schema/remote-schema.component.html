@@ -1,0 +1,27 @@
+<div class="page">
+  <div class="page__form">
+    <div class="picker">
+      <span>GET /api/forms/</span>
+      @for (id of ids; track id) {
+        <button type="button" class="btn" [class.is-active]="id === formId()" (click)="select(id)">{{ id }}</button>
+      }
+      <button type="button" class="btn" (click)="schema.reload()">Recargar</button>
+    </div>
+
+    @if (schema.isLoading()) {
+      <p>Cargando esquema…</p>
+    } @else if (schema.error()) {
+      <p class="error" role="alert">{{ errorMessage() }}</p>
+    } @else if (schema.value(); as s) {
+      <dynamic-form
+        [schema]="s"
+        [(model)]="model"
+        (formSubmit)="onSubmit($event)"
+        (statusChange)="status.set($event)">
+      </dynamic-form>
+    }
+  </div>
+  <aside class="page__side">
+    <app-model-viewer [model]="model()" [status]="status()" [lastSubmit]="lastSubmit()"></app-model-viewer>
+  </aside>
+</div>

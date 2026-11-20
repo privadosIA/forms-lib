@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "id": "busquedaCriterios",
+  "title": "Búsqueda de expedientes",
+  "description": "Formulario de criterios: no carga nada por sí mismo. Al pulsar «Buscar» (solo si es válido) la página copia los valores al modelo de la tabla de abajo.",
+  "layout": { "columns": 12 },
+  "fields": [
+    {
+      "key": "q",
+      "type": "text",
+      "label": "Texto",
+      "description": "Opcional: número, asunto o estado.",
+      "layout": { "col": 8 },
+      "validation": { "maxLength": 60 }
+    },
+    {
+      "key": "estado",
+      "type": "select",
+      "label": "Estado",
+      "defaultValue": "todos",
+      "layout": { "col": 4 },
+      "options": [
+        { "value": "todos", "label": "Todos" },
+        { "value": "P", "label": "Pendientes" },
+        { "value": "A", "label": "Aprobados" },
+        { "value": "R", "label": "Rechazados" }
+      ]
+    }
+  ]
+}

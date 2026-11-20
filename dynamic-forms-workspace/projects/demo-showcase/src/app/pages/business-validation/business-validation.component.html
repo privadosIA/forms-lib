@@ -1,0 +1,18 @@
+<div class="page">
+  <div class="page__form">
+    @if (schema(); as s) {
+      <dynamic-form
+        [schema]="s"
+        [(model)]="model"
+        submitLabel="Crear usuario"
+        (formSubmit)="onSubmit($event)"
+        (statusChange)="status.set($event)">
+      </dynamic-form>
+    } @else {
+      <p>Cargando esquema…</p>
+    }
+  </div>
+  <aside class="page__side">
+    <app-model-viewer [model]="model()" [status]="status()" [lastSubmit]="lastSubmit()"></app-model-viewer>
+  </aside>
+</div>

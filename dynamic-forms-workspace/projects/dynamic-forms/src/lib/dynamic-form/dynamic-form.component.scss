@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.df-form {
+  &__header {
+    margin-bottom: 1.25rem;
+  }
+
+  &__title {
+    margin: 0 0 0.25rem;
+    font-size: 1.35rem;
+    color: var(--df-color-text);
+  }
+
+  &__description {
+    margin: 0;
+    color: var(--df-color-muted);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+}
+
+.df-btn {
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--df-radius);
+  border: 1px solid var(--df-color-border);
+  background: transparent;
+  color: var(--df-color-text);
+  font: inherit;
+  cursor: pointer;
+
+  &--primary {
+    background: var(--df-color-primary);
+    border-color: var(--df-color-primary);
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

@@ -1,0 +1,18 @@
+<div class="df-radio-group" [class.df-radio-group--inline]="inline" role="radiogroup" [attr.aria-invalid]="showError">
+  @for (opt of options$ | async; track opt.value; let i = $index) {
+    <label class="df-radio" [class.df-radio--disabled]="isDisabled(opt)">
+      <input
+        type="radio"
+        class="df-radio__input"
+        [id]="id + '_' + i"
+        [name]="field.name || id"
+        [value]="opt.value"
+        [checked]="formControl.value === opt.value"
+        [disabled]="isDisabled(opt)"
+        [formlyAttributes]="field"
+        (change)="select(opt.value)"
+        (blur)="formControl.markAsTouched()" />
+      <span class="df-radio__label">{{ opt.label }}</span>
+    </label>
+  }
+</div>

@@ -1,0 +1,72 @@
+<div class="df-repeat" [class.df-repeat--table]="isTable" [style.--df-table-cols]="tableTemplate" [style.--df-table-min]="isTable ? tableMinWidth : null">
+  @if (props.label) {
+    <div class="df-repeat__title">{{ props.label }}</div>
+  }
+  @if (props.description) {
+    <p class="df-repeat__description">{{ props.description }}</p>
+  }
+
+  @if (isTable && rowCount > 0) {
+    <div class="df-repeat__head" aria-hidden="true">
+      <div class="df-repeat__cols">
+        @for (c of columns; track $index) {
+          <span class="df-repeat__th">
+            {{ c.label }}
+            @if (c.required) { <span class="df-required">*</span> }
+          </span>
+        }
+      </div>
+    </div>
+  }
+
+  @for (item of field.fieldGroup; track $index; let i = $index) {
+    <div class="df-repeat__row" role="group" [attr.aria-label]="rowTitle(i)">
+      @if (!isTable) {
+        <div class="df-repeat__row-head">
+          <span class="df-repeat__row-title">{{ rowTitle(i) }}</span>
+          @if (!locked) {
+            <button type="button" class="df-btn df-repeat__remove" [disabled]="!canRemove" (click)="remove(i)">
+              {{ props['removeLabel'] || 'Eliminar' }}
+            </button>
+          }
+        </div>
+      }
+      <div class="df-repeat__cells">
+        <formly-field [field]="item"></formly-field>
+      </div>
+      @if (isTable && !locked) {
+        <button
+          type="button"
+          class="df-btn df-repeat__remove df-repeat__remove--icon"
+          [disabled]="!canRemove"
+          [attr.aria-label]="(props['removeLabel'] || 'Eliminar') + ' ' + rowTitle(i)"
+          (click)="remove(i)">
+          ×
+        </button>
+      }
+    </div>
+  }
+
+  @if (totals.length) {
+    <dl class="df-repeat__totals">
+      @for (t of totals; track $index) {
+        <div class="df-repeat__total">
+          <dt>{{ t.label }}</dt>
+          <dd>{{ t.text }}</dd>
+        </div>
+      }
+    </dl>
+  }
+
+  @if (!locked) {
+    <button type="button" class="df-btn df-repeat__add" [disabled]="!canAdd" (click)="add()">
+      + {{ props['addLabel'] || 'Añadir' }}
+    </button>
+  }
+
+  @if (showError) {
+    <div class="df-error df-repeat__error" role="alert">
+      <formly-validation-message [field]="field"></formly-validation-message>
+    </div>
+  }
+</div>

@@ -1,0 +1,38 @@
+@use '../page-layout' as *;
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.events {
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  code {
+    font-size: 0.78rem;
+    word-break: break-word;
+  }
+
+  &__empty {
+    margin: 0;
+    color: #6e7781;
+    font-size: 0.9rem;
+  }
+}
+
+.search-title {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.15rem;
+}

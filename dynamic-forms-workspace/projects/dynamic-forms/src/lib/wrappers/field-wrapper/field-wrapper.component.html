@@ -1,0 +1,26 @@
+<div
+  class="df-field"
+  [class.df-field--invalid]="showError"
+  [class.df-field--required]="props.required === true"
+  [class.df-field--disabled]="props.disabled === true">
+  @if (showLabel) {
+    <label class="df-label" [attr.for]="id">
+      {{ props.label }}
+      @if (props.required) { <span class="df-required" aria-hidden="true">*</span> }
+    </label>
+  }
+
+  <div class="df-field__control">
+    <ng-container #fieldComponent></ng-container>
+  </div>
+
+  @if (props.description) {
+    <small class="df-description">{{ props.description }}</small>
+  }
+
+  @if (showError) {
+    <div class="df-error" role="alert">
+      <formly-validation-message [field]="field"></formly-validation-message>
+    </div>
+  }
+</div>

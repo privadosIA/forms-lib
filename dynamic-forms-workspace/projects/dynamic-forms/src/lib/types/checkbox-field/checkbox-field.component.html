@@ -1,0 +1,12 @@
+<label class="df-checkbox">
+  <input
+    type="checkbox"
+    class="df-checkbox__input"
+    [formControl]="formControl"
+    [formlyAttributes]="field"
+    [attr.aria-invalid]="showError" />
+  <span class="df-checkbox__label">
+    {{ props.label }}
+    @if (props.required) { <span class="df-required" aria-hidden="true">*</span> }
+  </span>
+</label>

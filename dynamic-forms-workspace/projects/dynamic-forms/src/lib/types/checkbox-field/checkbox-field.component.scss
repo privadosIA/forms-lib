@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+.df-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--df-color-text);
+
+  &__input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--df-color-primary);
+  }
+}
+
+.df-required {
+  color: var(--df-color-danger);
+}

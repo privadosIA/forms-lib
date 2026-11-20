@@ -1,0 +1,22 @@
+<div class="page">
+  <div class="page__form">
+    @if (schema(); as s) {
+      <dynamic-form
+        #df
+        [schema]="s"
+        [(model)]="model"
+        submitLabel="Enviar pedido"
+        (formSubmit)="onSubmit($event)"
+        (formInvalidSubmit)="onInvalid($event)"
+        (statusChange)="status.set($event)">
+        <button dfActions type="button" class="btn" (click)="df.reset()">Limpiar</button>
+        <button dfActions type="button" class="btn" (click)="prefill(df)">Cargar ejemplo</button>
+      </dynamic-form>
+    } @else {
+      <p>Cargando esquema…</p>
+    }
+  </div>
+  <aside class="page__side">
+    <app-model-viewer [model]="model()" [status]="status()" [lastSubmit]="lastSubmit()"></app-model-viewer>
+  </aside>
+</div>

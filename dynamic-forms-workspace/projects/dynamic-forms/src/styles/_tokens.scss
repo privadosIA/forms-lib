@@ -1,0 +1,17 @@
+// Design tokens de @core/dynamic-forms. Sobrescríbelos en tu app:
+//   .df-form { --df-color-primary: #0b5fff; }
+@mixin df-tokens {
+  --df-color-primary: #1f6feb;
+  --df-color-text: #1f2328;
+  --df-color-muted: #6e7781;
+  --df-color-border: #d0d7de;
+  --df-color-surface: #ffffff;
+  --df-color-danger: #cf222e;
+  --df-color-focus: rgba(31, 111, 235, 0.25);
+  --df-radius: 6px;
+  --df-field-gap: 1rem;
+  --df-grid-gap: 1rem;
+  --df-label-size: 0.875rem;
+  --df-control-padding: 0.5rem 0.75rem;
+  --df-font: inherit;
+}

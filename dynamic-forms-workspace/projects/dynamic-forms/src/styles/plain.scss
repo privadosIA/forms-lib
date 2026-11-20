@@ -1,0 +1,11 @@
+// Tema "plain". En la app: @use '@core/dynamic-forms/styles/plain';
+// (en desarrollo dentro del workspace: @use 'plain'; vía stylePreprocessorOptions.includePaths)
+@use 'tokens';
+@use 'grid';
+@use 'badge';
+
+// Tokens con especificidad 0 (:where): la app los sobrescribe con un simple `.df-form { … }`, sin depender del orden.
+:where(.df-form) {
+  @include tokens.df-tokens;
+  font: var(--df-font);
+}

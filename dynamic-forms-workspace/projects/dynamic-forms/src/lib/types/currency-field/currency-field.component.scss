@@ -1,0 +1,22 @@
+@use '../../../styles/control-base' as *;
+
+:host {
+  display: block;
+}
+
+.df-control {
+  @include df-control-base;
+}
+
+.df-currency {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-currency__words {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--df-color-text);
+}

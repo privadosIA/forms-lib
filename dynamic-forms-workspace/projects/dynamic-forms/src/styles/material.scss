@@ -1,0 +1,16 @@
+// Tema "material": la apariencia la aporta @angular/material; aquí solo rejilla + tokens.
+@use 'tokens';
+@use 'grid';
+@use 'badge';
+
+// Tokens con especificidad 0 (:where): un `.df-form { --df-color-primary: … }` de la app gana sin `.df-form.df-form`.
+:where(.df-form.df-theme-material) {
+  @include tokens.df-tokens;
+}
+
+.df-form.df-theme-material {
+  formly-field > .mat-mdc-form-field,
+  formly-field > mat-form-field {
+    width: 100%;
+  }
+}

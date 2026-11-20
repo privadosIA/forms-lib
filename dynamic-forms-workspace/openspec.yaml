@@ -1,0 +1,878 @@
+# =============================================================================
+# OpenSpec — @core/dynamic-forms
+# -----------------------------------------------------------------------------
+# Formal contract between the backend (or Appian) that emits form metadata
+# and the Angular library that renders it. Anything not described here is
+# NOT part of the contract and the adapter will discard it (sanitization).
+# =============================================================================
+openspec: "1.0"
+
+info:
+  name: "@core/dynamic-forms"
+  version: "2.19.1"
+  title: "Dynamic Forms — Schema, validation, conditional logic and public API contract"
+  description: >
+    Standalone Angular library that wraps @ngx-formly/core and renders
+    reactive forms from JSON metadata. Consumers never touch Formly:
+    they only deal with the contracts described in this file.
+  license: MIT
+  copyright: "Copyright (c) 2026 Jesús Suero"
+
+# -----------------------------------------------------------------------------
+# 1. SchemaContract
+# -----------------------------------------------------------------------------
+# Framework-agnostic JSON Schema (draft 2020-12). This is the document that
+# travels from the backend to the frontend.
+# -----------------------------------------------------------------------------
+contracts:
+
+  SchemaContract:
+    $schema: "https://json-schema.org/draft/2020-12/schema"
+    $id: "https://core/dynamic-forms/schema/v1"
+    title: "DfFormSchema"
+    type: object
+    additionalProperties: false
+    required: [version, id, fields]
+    properties:
+      version:
+        type: string
+        const: "1.0"
+        description: Contract version. The adapter rejects unknown versions.
+      id:
+        type: string
+        pattern: "^[A-Za-z][A-Za-z0-9_-]*$"
+        description: Unique form identifier. The <form> gets the id df-{id}.
+      title: { type: string }
+      description: { type: string }
+      layout:
+        $ref: "#/$defs/FormLayout"
+      fields:
+        type: array
+        minItems: 1
+        items: { $ref: "#/$defs/Node" }
+      meta:
+        type: object
+        description: Opaque metadata (e.g. Appian process ids). The library does not interpret it.
+
+    $defs:
+
+      FormLayout:
+        type: object
+        additionalProperties: false
+        properties:
+          columns:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 1
+            description: >
+              Fields per row. The grid always has 12 columns and each field takes
+              12/columns unless it sets layout.col. By default, one field per row.
+          gap:
+            type: string
+            pattern: "^(0|\\d*\\.?\\d+(px|rem|em|%|vw|vh))$"
+            default: "1rem"
+            description: >
+              Spacing between columns. Applied as the --df-grid-gap CSS variable.
+              Simple lengths only (1rem, 12px…); the validator rejects url(), var(), calc()…
+          resetOnHide:
+            type: boolean
+            description: >
+              Default of logic.resetOnHide for the whole schema; false keeps the value of a hidden field in the
+              model. A node's own logic.resetOnHide wins over it, and it wins over the application's
+              defaultResetOnHide.
+
+      Node:
+        oneOf:
+          - $ref: "#/$defs/Field"
+          - $ref: "#/$defs/Group"
+          - $ref: "#/$defs/Array"
+          - $ref: "#/$defs/Table"
+          - $ref: "#/$defs/Slot"
+
+      FieldType:
+        description: >
+          One of the contract types, which the built-in themes (plain, material,
+          bootstrap) map to their Formly component, or the name of a Formly type
+          registered by the app with provideDynamicForms({ types }). The validator
+          accepts both and rejects anything else.
+
+          currency: an amount in any currency. numberFormat 'es' (1.500,75: dot as
+          thousands separator in groups of 3, comma as decimal separator) or 'en' (1,500.75);
+          up to 2 decimals, no negatives and no inner spaces; leading and trailing spaces
+          and the currency symbol or code at the start or end are ignored. The model stores
+          a number (or the typed text while it is not valid). On blur it is shown
+          formatted (1.500,75 € / £1,500.75) and below it, the amount in words in Spanish or
+          English. Optional props, with defaults in provideDynamicForms({ currency }):
+          currency (ISO 4217; EUR), numberFormat (es), wordsLanguage (same as numberFormat),
+          amountInWords (true), wordsUppercase (true) and currencyWords { singular, plural,
+          centSingular, centPlural, feminine?, centFeminine? } for currencies without built-in
+          names (built in: EUR, GBP and USD in Spanish and English). Formatting and words only
+          exist in the plain theme; material and bootstrap render it as a text input with the
+          same validation.
+
+          textarea: with validation.maxLength it shows an "N/max" counter below the box and
+          does not allow typing beyond the maximum (counting according to maxLengthMode).
+        anyOf:
+          - type: string
+            enum:
+              - text
+              - email
+              - password
+              - number
+              - textarea
+              - select
+              - multiselect
+              - radio
+              - checkbox
+              - date
+              - hidden
+              - currency
+          - type: string
+            description: Name of a type registered with provideDynamicForms({ types }).
+
+      Field:
+        type: object
+        additionalProperties: false
+        required: [key, type]
+        properties:
+          key:
+            type: string
+            pattern: "^[A-Za-z_][A-Za-z0-9_.]*$"
+            description: Key of the value in the model. Supports dot notation (a.b).
+          type: { $ref: "#/$defs/FieldType" }
+          label: { type: string }
+          placeholder: { type: string }
+          description: { type: string, description: Help text below the control. }
+          defaultValue: {}
+          readonly: { type: boolean, default: false }
+          disabled: { type: boolean, default: false }
+          hidden: { type: boolean, default: false, description: Statically hidden (not reactive). }
+          options: { $ref: "#/$defs/OptionsSource" }
+          validation: { $ref: "#/../ValidationContract/$defs/Validation" }
+          logic: { $ref: "#/../ConditionalLogicContract/$defs/ConditionalLogic" }
+          layout: { $ref: "#/$defs/FieldLayout" }
+          props:
+            type: object
+            description: >
+              Extra properties passed to the type component (rows, step, min, max…).
+              Only keys that start with a letter followed by letters, digits
+              or _ are kept. Keys starting with "on" (case-insensitive), keys
+              matching __proto__/constructor/prototype and function values are dropped.
+
+      Group:
+        type: object
+        additionalProperties: false
+        required: [type, id, fields]
+        properties:
+          type: { const: group }
+          id: { type: string }
+          title: { type: string }
+          description: { type: string }
+          columns: { type: integer, minimum: 1, maximum: 12, default: 1, description: Fields per row inside the group (see FormLayout.columns). }
+          cssClass: { type: string }
+          logic: { $ref: "#/../ConditionalLogicContract/$defs/ConditionalLogic" }
+          fields:
+            type: array
+            minItems: 1
+            items: { $ref: "#/$defs/Node" }
+
+      Array:
+        description: >
+          Repeatable list of rows. The model stores key: [{...}, {...}], one object per row with
+          the node's fields. The user adds and removes rows with buttons. The rows are rendered
+          by the library's own df-repeat type in every theme. Fields inside a row can compare against
+          another field of the same row with a relative path ("./quantity", see ConditionalLogicContract),
+          and against the form's root with an absolute key. An array cannot contain another array.
+        type: object
+        additionalProperties: false
+        required: [type, key, fields]
+        properties:
+          type: { const: array }
+          key: { type: string, pattern: "^[A-Za-z_][A-Za-z0-9_.]*$" }
+          title: { type: string }
+          description: { type: string }
+          itemLabel: { type: string, default: Elemento, description: 'Name of each row in the rows display: Elemento 1, Elemento 2…' }
+          addLabel: { type: string, default: Añadir }
+          removeLabel: { type: string, default: Eliminar }
+          minItems:
+            type: integer
+            minimum: 0
+            description: >
+              Minimum number of rows. The form starts with that many empty rows, the remove button is
+              disabled at the minimum and the list is invalid (error minItems) with fewer.
+          maxItems:
+            type: integer
+            minimum: 1
+            description: Maximum number of rows. The add button is disabled at the maximum and the list is invalid (error maxItems) with more.
+          totals:
+            type: array
+            items: { $ref: "#/$defs/ArrayTotal" }
+            description: >
+              Summaries shown below the rows and recalculated on every change. They are display only:
+              they are not stored in the model, so the backend recomputes them.
+          display:
+            type: string
+            enum: [rows, table]
+            default: rows
+            description: >
+              rows: one card per row, laid out as a group (see columns). table: a header with the
+              field labels and one line per row, where each field is a column whose relative width
+              is its layout.col (default 1). In table, fields cannot be hidden (hidden, showWhen,
+              hideWhen) and groups are not allowed, because they would misalign the columns.
+          columns: { type: integer, minimum: 1, maximum: 12, default: 1, description: 'Fields per line inside each row (display rows only).' }
+          cssClass: { type: string }
+          logic: { $ref: "#/../ConditionalLogicContract/$defs/ConditionalLogic" }
+          fields:
+            type: array
+            minItems: 1
+            items: { $ref: "#/$defs/Node" }
+
+      Slot:
+        description: >
+          A place in the form for a block of the application (a preview, a summary, a panel) between the schema's
+          fields. It is not a field: no key, no control, nothing written to the model. The application fills it with
+          <ng-template dfSlot="name" let-model> inside <dynamic-form>; without a template of that name nothing is
+          drawn. It takes the whole row. It can be at the root or inside a Group, not inside an Array.
+        type: object
+        additionalProperties: false
+        required: [type, name]
+        properties:
+          type: { const: slot }
+          name: { type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*$", description: Name of the dfSlot template that fills it. }
+          cssClass: { type: string }
+          logic: { $ref: "#/../ConditionalLogicContract/$defs/ConditionalLogic" }
+
+      Table:
+        description: >
+          Read-only data table. It is not a form field: it has no key and writes nothing to the model.
+          The rows come from a service of the app (source, resolved by its DfTableProvider), from the schema
+          (rows) or from a model property (dataKey, which can be filled or replaced after the form is
+          rendered); source cannot be combined with the other two, and dataKey wins over rows. Filtering,
+          sorting and paging happen on the client, unless source.mode is server, where the service does them.
+          Row buttons and selection are reported to the application as events (tableAction, tableSelect, tableNavigate). Every theme renders it with the library's own df-table
+          type. It supports logic (showWhen/hideWhen). Not allowed inside an Array with display "table".
+        type: object
+        additionalProperties: false
+        required: [type, id, columns]
+        properties:
+          type: { const: table }
+          id: { type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*$", description: Identifies the table in the events. }
+          title: { type: string }
+          description: { type: string }
+          columns:
+            type: array
+            minItems: 1
+            items: { $ref: "#/$defs/TableColumn" }
+          rows:
+            type: array
+            items: { type: object }
+            description: Inline rows. Strings lose control characters and __proto__ keys are dropped.
+          dataKey:
+            type: string
+            pattern: "^[A-Za-z_][A-Za-z0-9_.]*$"
+            description: Dotted path in the root model of the array of rows.
+          source:
+            type: object
+            additionalProperties: false
+            required: [endpoint]
+            description: >
+              Rows loaded by the app's DfTableProvider.load(endpoint, request). While it loads the table shows
+              "Cargando…"; if it fails it shows errorMessage and a retry button. When a request is replaced by
+              a newer one, the old response is discarded. Selecting is cleared on every reload.
+            properties:
+              endpoint: { type: string }
+              mode:
+                type: string
+                enum: [client, server]
+                default: client
+                description: >
+                  client: one request returns all the rows (an array, or { rows, total }) and the table
+                  filters, sorts and pages them locally, without calling again. server: one request per page,
+                  sort or search, with request { page, pageSize, sort, sorts, filter, columnFilters, params }, answered with
+                  { rows, total } (total = rows matching the filter; an array counts as the whole total).
+                  The search waits 300 ms after the last keystroke. server requires pageSize.
+              dependsOn:
+                type: array
+                items: { type: string }
+                description: >
+                  Form fields (root keys, or ./key inside an Array row) sent as request.params, by name.
+                  The table is reloaded from the first page when any changes, and it requests nothing
+                  while one of them is empty (unless requireParams is false).
+              externalParams:
+                type: boolean
+                default: false
+                description: >
+                  dependsOn names keys of the root model that are not fields of this schema (the app fills
+                  them, e.g. with the criteria of a search form when the user presses "Buscar"). The validator
+                  then only checks they are valid model keys. Replacing the whole model reloads the table.
+              requireParams:
+                type: boolean
+                default: true
+                description: >
+                  false loads the table even when a dependsOn value is empty (optional search criteria).
+                  The empty values are sent as they are in request.params.
+          errorMessage: { type: string, default: No se pudieron cargar los datos }
+          filter: { type: boolean, default: false, description: Shows a search box over the visible text of the columns (case and accent insensitive). }
+          filterLabel: { type: string, default: Buscar }
+          searchKeys: { type: array, items: { type: string }, description: "Row keys (dotted) the search box also looks at, even if they are not columns. Client mode only; in server mode the service does the search." }
+          pageSize: { type: integer, minimum: 1, description: Rows per page. Without it there is no paging (required by source.mode server). }
+          pageSizeOptions: { type: array, items: { type: integer, minimum: 1 }, minItems: 1, default: [5, 10, 25, 100] }
+          sort:
+            description: >
+              Initial order. Clicking a header cycles ascending, descending and unsorted. A list of several
+              columns needs multiSort: the first one rules and each next one breaks the ties of the previous.
+            oneOf:
+              - $ref: "#/$defs/TableSort"
+              - type: array
+                minItems: 1
+                items: { $ref: "#/$defs/TableSort" }
+          multiSort:
+            type: boolean
+            default: false
+            description: >
+              Sorting by several columns: Shift + click on a header adds the column to the order (or flips its
+              direction, and a third time removes it); a click without Shift sorts by that column alone. With
+              several, each header shows its position. In server mode the request carries sorts, the whole order,
+              besides sort (the first one).
+          selectable:
+            oneOf:
+              - { type: boolean }
+              - { type: string, enum: [single, multiple] }
+            default: false
+            description: >
+              true or single: one row at a time, by clicking it. multiple: a checkbox column, and a header
+              checkbox that ticks every filtered row (in server mode, the rows of the page). Reported by tableSelect.
+          selectableWhen:
+            $ref: "#/../ConditionalLogicContract/$defs/Rule"
+            description: >
+              Only rows that meet the rule can be selected (./field reads the row, any other path the form
+              model). The others have a disabled checkbox, ignore clicks and are skipped by the header checkbox.
+          headerSelects:
+            type: string
+            enum: [filtered, page]
+            default: filtered
+            description: >
+              Only with selectable multiple. What the header checkbox ticks: filtered (every filtered row, the
+              default) or page (only the visible page). In server mode it is always the page.
+          selectionKey:
+            type: string
+            pattern: "^[A-Za-z_][A-Za-z0-9_.]*$"
+            description: >
+              Only with selectable multiple. Row property that identifies a row, so that in server mode the
+              selection survives a change of page, sort or filter. Without it rows are identified by object and
+              those changes (and any reload) clear the selection.
+          pinnableColumns:
+            type: boolean
+            default: false
+            description: >
+              Puts a pin button in every column header so the user can freeze or release that column. A column
+              that is frozen moves to the end of the frozen block and goes back to its place when released.
+              It starts from columns[].frozen, and the user's choice lasts only while the table is on screen.
+          resizableColumns:
+            type: boolean
+            default: false
+            description: >
+              The right edge of each header can be dragged to change the width of the column (or moved with the
+              left and right arrows when focused; a double click restores the widths). From the first change the
+              widths become pixels and the table scrolls horizontally when it does not fit. persistState remembers them.
+          reorderableColumns:
+            type: boolean
+            default: false
+            description: >
+              The headers can be dragged to change the order of the columns (or moved with Alt plus the left and
+              right arrows). A frozen column only moves among the frozen ones and a normal column among the normal
+              ones. persistState remembers the order.
+          persistState:
+            oneOf:
+              - { type: boolean }
+              - { type: string, enum: [session, local] }
+            default: false
+            description: >
+              Remembers the sort, the search box, the column filters, the rows per page, the columns the user
+              pinned (pinnableColumns) the column order (reorderableColumns) and the widths (resizableColumns). true or session keeps them in sessionStorage, local in localStorage. What is
+              restored is checked against the current columns; the page and the selection are not saved.
+          stateKey:
+            type: string
+            pattern: "^[A-Za-z][A-Za-z0-9_-]*$"
+            description: Key the state is saved under (prefixed with df-table:). Default is the table id.
+          exportCsv:
+            description: >
+              Shows an "Exportar CSV" button. true names the file after the table id. The CSV has the visible
+              text of every column (amounts and dates already formatted), ";" as separator, UTF-8 with BOM and
+              CRLF lines, and text that Excel would read as a formula is prefixed with an apostrophe. It exports
+              the selected rows if there are any (selectable multiple), otherwise every row that matches the
+              filters; in server mode that means asking the DfTableProvider for page 0 with pageSize = total.
+            oneOf:
+              - { type: boolean }
+              - type: object
+                additionalProperties: false
+                properties:
+                  filename: { type: string, pattern: "^[A-Za-z0-9_][A-Za-z0-9_. -]*$", maxLength: 100, description: With or without .csv. Default is the table id. }
+          actions:
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              required: [name, label]
+              properties:
+                name: { type: string, description: Unique within the table; goes in the tableAction event. }
+                label: { type: string, description: Button text; with icon it is the accessible name (and the tooltip if there is none). }
+                icon: { type: string, maxLength: 32, description: "An included icon (view, edit, delete, download, add, check, close) drawn as SVG, or any short text (an emoji, a symbol) drawn as is." }
+                tooltip: { type: string, description: Title of the button. Defaults to label when there is an icon. }
+                showWhen: { $ref: "#/../ConditionalLogicContract/$defs/Rule", description: "Only rows that meet the rule get the button. ./field reads the row; any other path reads the form model." }
+                disabledWhen: { $ref: "#/../ConditionalLogicContract/$defs/Rule", description: Rows that meet the rule get the button disabled. }
+          emptyMessage: { type: string, default: No hay datos }
+          cssClass: { type: string }
+          logic: { $ref: "#/../ConditionalLogicContract/$defs/ConditionalLogic" }
+
+      TableColumn:
+        type: object
+        additionalProperties: false
+        required: [key, label]
+        properties:
+          key: { type: string, pattern: "^[A-Za-z_][A-Za-z0-9_.]*$", description: Property of each row; dotted keys read nested objects. }
+          label: { type: string }
+          type:
+            type: string
+            enum: [text, number, currency, date, datetime, boolean, map, badge, link]
+            default: text
+            description: >
+              How the value is shown and sorted. number and currency use the number format of the app
+              (currency also its currency, or the column's); date is dd/MM/yyyy and datetime adds HH:mm when
+              the value has a time (ISO 8601 or dd/MM/yyyy); boolean is Sí/No; map looks the value up in map
+              and shows it as is when it is not there. A value that does not fit the type is shown as is.
+          map: { type: object, additionalProperties: { type: string }, description: "Required by type map: value → text." }
+          variants: { type: object, additionalProperties: { type: string, enum: [ok, warn, error, info] }, description: "Only type badge: value → colour variant. Values without an entry get the neutral badge. The text comes from map, or is the value itself." }
+          href: { type: string, pattern: "^(/(?!/)|#|https?://)\\S*$", description: "Required by type link: the destination; {key} is replaced by the row property (dotted keys allowed, URL-encoded). With a missing value the cell shows the text without a link." }
+          template: { type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*$", description: "Name of an application <ng-template dfCell=name> that draws the cells of this column. Filtering, sorting and CSV still use the value; without a template of that name the text is drawn." }
+          sortable: { type: boolean, default: true, description: Empty cells always sort last. }
+          col: { type: integer, minimum: 1, maximum: 12, default: 1, description: Relative width of the column. }
+          currency: { type: string, pattern: "^[A-Z]{3}$", description: ISO 4217 code for type currency. }
+          filter:
+            type: boolean
+            default: false
+            description: >
+              Shows a filter under the header of this column: a text box (contains, case and accent insensitive,
+              over the visible text) or, for map and boolean columns, a drop-down. Filters combine with each other
+              and with the table search. In server mode they go in request.columnFilters (column key → text typed,
+              or the map key / "true" / "false" chosen), without the empty ones.
+          frozen:
+            type: boolean
+            default: false
+            description: >
+              Keeps the column fixed on the left while the table scrolls horizontally (with multiple selection,
+              the checkbox column is fixed too). Only the first columns can be frozen: a frozen column cannot
+              come after one that is not.
+          html:
+            type: boolean
+            default: false
+            description: >
+              Renders the cell as HTML (links, badges) instead of text. Only for type text. The HTML goes through
+              Angular's sanitizer (no scripts, on* handlers, style or javascript: URLs). Filtering, sorting and CSV
+              export use the text without tags. Badges are <span class="df-badge df-badge--ok|warn|error|info">.
+
+      TableSort:
+        type: object
+        additionalProperties: false
+        required: [key]
+        properties:
+          key: { type: string, description: Key of a column. }
+          direction: { type: string, enum: [asc, desc], default: asc }
+
+      ArrayTotal:
+        type: object
+        additionalProperties: false
+        required: [label, op]
+        properties:
+          label: { type: string }
+          op:
+            type: string
+            enum: [sum, count, avg, min, max]
+            description: >
+              count without field counts the rows; with field, the rows where it is filled. The other
+              operations need a field and ignore empty or unreadable values (avg, min and max show a dash
+              when there are none; sum shows 0).
+          field:
+            type: string
+            description: >
+              Key of a number or currency field of the row. A currency field shows the result with its
+              currency and number format; a number field with the app's number format.
+
+      FieldLayout:
+        type: object
+        additionalProperties: false
+        properties:
+          col:
+            type: integer
+            minimum: 1
+            maximum: 12
+            description: Columns it spans within its group's 12-column grid. Without col, it takes 12/columns of the group.
+          order: { type: integer }
+          cssClass: { type: string }
+
+      Option:
+        type: object
+        additionalProperties: false
+        required: [value, label]
+        properties:
+          value: { type: [string, number, boolean] }
+          label: { type: string }
+          disabled: { type: boolean }
+
+      OptionsSource:
+        description: >
+          Source of the select/multiselect/radio options. It can be a plain array
+          (syntactic sugar for "static"), a source that depends on another
+          field (cascading select resolved on the client) or a remote source resolved
+          by the DfOptionsProvider registered by the consuming application.
+        oneOf:
+          - type: array
+            items: { $ref: "#/$defs/Option" }
+          - type: object
+            additionalProperties: false
+            required: [source, items]
+            properties:
+              source: { const: static }
+              items: { type: array, items: { $ref: "#/$defs/Option" } }
+          - type: object
+            additionalProperties: false
+            required: [source, dependsOn, map]
+            properties:
+              source: { const: dependent }
+              dependsOn: { type: string, description: 'Key of the parent field. Inside an Array row, ./key is a field of the same row.' }
+              map:
+                type: object
+                description: Parent value → child options.
+                additionalProperties:
+                  type: array
+                  items: { $ref: "#/$defs/Option" }
+              resetOnChange: { type: boolean, default: true }
+          - type: object
+            additionalProperties: false
+            required: [source, endpoint]
+            properties:
+              source: { const: remote }
+              endpoint: { type: string }
+              dependsOn:
+                type: array
+                items: { type: string }
+                description: >
+                  Keys whose values are sent as parameters to the endpoint. Inside an Array row, ./key is a
+                  field of the same row (sent to the endpoint without the ./).
+              resetOnChange: { type: boolean, default: true }
+
+  # ---------------------------------------------------------------------------
+  # 2. ValidationContract
+  # ---------------------------------------------------------------------------
+  ValidationContract:
+    title: "Declarative validation"
+    description: >
+      Two layers: built-in validators (mapped to @angular/forms Validators)
+      and business validators referenced by alias. Aliases are resolved
+      against the library catalog (ValidatorRegistryService), which can be extended
+      with provideDynamicForms({ validators }).
+    $defs:
+      Validation:
+        type: object
+        additionalProperties: false
+        properties:
+          required: { type: boolean }
+          min: { type: number }
+          max: { type: number }
+          minLength: { type: integer, minimum: 0 }
+          maxLength:
+            type: integer
+            minimum: 0
+            description: >
+              Maximum number of characters. By default (maxLengthMode 'weighted') every non-ASCII
+              character (ñ, á, ü, €…) counts as 2, because the backend measures the limit in bytes; with
+              maxLengthMode 'chars' it counts as 1. Applied equally to validation, to input
+              blocking (text inputs and textarea) and to the textarea counter. It can be
+              changed for a single field with props.maxLengthMode.
+          pattern: { type: string, description: Regular expression (without delimiters). }
+          validators:
+            type: array
+            items: { $ref: "#/$defs/ValidatorRef" }
+          asyncValidators:
+            type: array
+            items: { $ref: "#/$defs/ValidatorRef" }
+          messages:
+            type: object
+            description: >
+              Per-field message overrides by error name (required, min, dni…).
+              Supports {{arg}} placeholders with the validator args
+              and the field props (e.g. {{minLength}}).
+            additionalProperties: { type: string }
+
+      ValidatorRef:
+        type: object
+        additionalProperties: false
+        required: [name]
+        properties:
+          name:
+            type: string
+            description: Alias registered in the catalog.
+          args:
+            type: object
+            description: Arguments for the validator (passed through as-is).
+          message:
+            type: string
+            description: Specific message for this reference (takes precedence over the catalog one).
+
+    builtIn:
+      required: { error: required, message: "Este campo es obligatorio" }
+      min: { error: min, message: "El valor mínimo es {{min}}" }
+      max: { error: max, message: "El valor máximo es {{max}}" }
+      minLength: { error: minLength, message: "Mínimo {{minLength}} caracteres" }
+      maxLength: { error: maxLength, message: "Máximo {{maxLength}} caracteres" }
+      pattern: { error: pattern, message: "El formato no es válido" }
+      email: { error: email, message: "Debe ser un email válido", description: Applied automatically to type email fields. }
+      currencyFormat: { error: currencyFormat, message: "El importe no tiene un formato válido (p. ej. {ejemplo})", description: "type currency fields. The example follows the field's numberFormat (1.500,75 or 1,500.75)." }
+      currencyDecimals: { error: currencyDecimals, message: "El importe no puede tener más de dos decimales", description: type currency fields. }
+
+    catalog:
+      # Business validators shipped with the library (sync unless stated otherwise).
+      dni:
+        description: Spanish DNI (national ID; 8 digits + check letter).
+        message: "El DNI no es válido"
+      nie:
+        description: Spanish NIE (foreigner ID; X/Y/Z + 7 digits + letter).
+        message: "El NIE no es válido"
+      dniNie:
+        description: Accepts DNI or NIE.
+        message: "El documento no es válido"
+      cif:
+        description: CIF/NIF of a legal entity, with check digit.
+        message: "El CIF no es válido"
+      iban:
+        description: IBAN with mod-97 validation.
+        message: "El IBAN no es válido"
+      phoneES:
+        description: 9-digit Spanish phone number (6,7,8,9).
+        message: "El teléfono no es válido"
+      postalCodeES:
+        description: Spanish postal code (01000–52999).
+        message: "El código postal no es válido"
+      matchesField:
+        description: The value must match the value of another field.
+        args: { field: string }
+        message: "Los valores no coinciden"
+
+    extension:
+      description: >
+        Registration of custom validators (sync or async) from the consuming app.
+      interface: |
+        interface DfValidatorDefinition {
+          name: string;
+          async?: boolean;
+          validate: (control: AbstractControl, args?: Record<string, unknown>, field?: FormlyFieldConfig)
+                    => boolean | Promise<boolean> | Observable<boolean>;   // true == valid
+          message: string | ((args: Record<string, unknown> | undefined, field: FormlyFieldConfig) => string);
+        }
+
+  # ---------------------------------------------------------------------------
+  # 3. ConditionalLogicContract
+  # ---------------------------------------------------------------------------
+  ConditionalLogicContract:
+    title: "Reactive conditional logic"
+    description: >
+      Declarative rules (no eval) evaluated against the form's root model
+      on every change. Rules are condition trees that can be combined with all/any/not.
+    $defs:
+      ConditionalLogic:
+        type: object
+        additionalProperties: false
+        properties:
+          showWhen: { $ref: "#/$defs/Rule", description: Visible only if the rule is true. }
+          hideWhen: { $ref: "#/$defs/Rule", description: Hidden if the rule is true (takes precedence over showWhen). }
+          requiredWhen: { $ref: "#/$defs/Rule" }
+          disabledWhen: { $ref: "#/$defs/Rule" }
+          resetOnHide:
+            type: boolean
+            default: true
+            description: >
+              When hidden, the control is removed from the FormGroup and its value is deleted
+              from the model. With false the value is kept (still not validated).
+
+      Rule:
+        oneOf:
+          - $ref: "#/$defs/Condition"
+          - $ref: "#/$defs/RuleGroup"
+
+      RuleGroup:
+        type: object
+        additionalProperties: false
+        minProperties: 1
+        properties:
+          all: { type: array, items: { $ref: "#/$defs/Rule" } }
+          any: { type: array, items: { $ref: "#/$defs/Rule" } }
+          not: { $ref: "#/$defs/Rule" }
+
+      Condition:
+        type: object
+        additionalProperties: false
+        required: [field, operator]
+        properties:
+          field:
+            type: string
+            description: >
+              Key (dotted) of the field whose value is evaluated, from the form's root model.
+              Inside an Array row, a path that starts with "./" is read from that row
+              ("./quantity"). The relative form is rejected outside an Array and when the row has no such field.
+              A path that starts with "ctx." is read from the external context the application passes to
+              <dynamic-form [context]> ("ctx.mode"); the validator accepts any name after it, since the keys
+              are not known in advance, and a field cannot use the key "ctx". When the context changes, the
+              conditions are evaluated again.
+          operator:
+            type: string
+            enum: [eq, neq, in, nin, gt, gte, lt, lte, empty, notEmpty, truthy, falsy, matches, contains]
+          value:
+            description: Operand. Required except for empty/notEmpty/truthy/falsy.
+
+    cascading:
+      description: >
+        Cascading selects are declared with options.source = dependent | remote.
+        When the parent field changes, the child is cleared (resetOnChange) and recomputes
+        its options. With "remote" the call is made by the app's DfOptionsProvider.
+
+  # ---------------------------------------------------------------------------
+  # 4. ComponentAPI
+  # ---------------------------------------------------------------------------
+  ComponentAPI:
+    title: "Public API of @core/dynamic-forms"
+    entryPoint: "@core/dynamic-forms"
+
+    components:
+      DynamicFormComponent:
+        selector: dynamic-form
+        standalone: true
+        inputs:
+          schema: { type: DfFormSchema, required: true, description: Schema conforming to SchemaContract. }
+          model: { type: "Record<string, unknown>", twoWay: true, description: "[(model)] — reactive form model." }
+          submitLabel: { type: string, default: "Enviar" }
+          showDefaultActions: { type: boolean, default: true, description: "Renders the default submit button. With false only the actions projected into [dfActions] remain." }
+          validateOnInit: { type: boolean, default: false }
+          context: { type: "Record<string, unknown>", default: {}, description: "External data for conditions: a rule whose field is ctx.mode reads context.mode. Changing the object re-evaluates the conditions (showWhen, hideWhen, requiredWhen, disabledWhen, and the row rules of tables)." }
+          showErrors: { type: "'touched' | 'always'", default: touched, description: "When errors show. 'touched' waits for the user to touch the field or submit; 'always' shows them from the moment the field exists, including fields that appear later (conditional sections, new rows)." }
+        outputs:
+          modelChange: { type: "Record<string, unknown>" }
+          formSubmit: { type: DfSubmitEvent, description: "Only emitted if the form is valid. { model, form, schema }" }
+          formInvalidSubmit: { type: DfSubmitEvent, description: Emitted when trying to submit an invalid form. }
+          valueChange: { type: "Record<string, unknown>", description: Alias of modelChange; emits the same model on every change. }
+          statusChange: { type: "'VALID' | 'INVALID' | 'PENDING' | 'DISABLED'", description: Emits the initial status when the form mounts and then every change. }
+          formReady: { type: FormGroup, description: The internal FormGroup once built. }
+          tableAction: { type: "{ tableId, action, row }", description: A row button of a Table was clicked. }
+          tableSelect: { type: "{ tableId, row, rows, changed }", description: "The selection of a selectable Table changed. changed is { rows, selected }: the rows this event ticked (selected true) or unticked (selected false), in any mode. rows is the whole selection. In single selection row is the chosen row (null when deselected); in multiple selection row is null." }
+          tableNavigate: { type: "{ tableId, column, href, row, originalEvent }", description: A link of a link column was clicked (left button, no modifier keys). Call originalEvent.preventDefault() and navigate in the app to avoid a page reload. }
+        contentProjection:
+          "[dfActions]": "Slot for buttons/actions. Added next to the default submit button; to remove that button use showDefaultActions=false."
+          "[dfHeader]": "Optional slot above the fields."
+          "ng-template[dfSlot]": "<ng-template dfSlot=\"name\" let-model>: fills the schema's { type: slot, name } nodes. Needs DfSlotDirective in the consumer's imports."
+          "ng-template[dfCell]": "<ng-template dfCell=\"name\" let-row let-value=\"value\">: draws the cells of the table columns that have template: name. Needs DfCellDirective in the consumer's imports."
+          "ng-template[dfEmpty]": "<ng-template dfEmpty=\"tableId\" let-table>: replaces emptyMessage of that table (without a value, of every table without its own). Needs DfEmptyDirective in the consumer's imports."
+        methods:
+          submit(): "Triggers validation and the formSubmit output."
+          reset(model?): "Resets the form to the given model or to the initial one."
+          markAllAsTouched(): void
+          revalidate(): "Re-runs the validators of every control. For validators that read state outside the form: call it when that state changes."
+          get form(): FormGroup
+          get valid(): boolean
+        hostClasses:
+          - "df-form"
+          - "theme.hostClass (the built-in themes use df-theme-plain, df-theme-material and df-theme-bootstrap)"
+
+    providers:
+      provideDynamicForms:
+        signature: "provideDynamicForms(config?: DynamicFormsConfig): EnvironmentProviders"
+        config:
+          theme: { type: DfTheme, default: PLAIN_THEME, description: Visual theme (plain | material | bootstrap | custom). }
+          types: { type: "TypeOption[]", description: Additional Formly types. }
+          wrappers: { type: "WrapperOption[]" }
+          validators: { type: "DfValidatorDefinition[]", description: Additional business validators. }
+          messages: { type: "Record<string, string | MessageFn>", description: Global message overrides. }
+          defaultResetOnHide: { type: boolean, default: true }
+          strictSchema: { type: boolean, default: true, description: Throws DynamicFormsSchemaError if the schema does not validate. }
+          optionsProvider: { type: "Type<DfOptionsProvider>", description: Resolver for options.source = remote. }
+          tableProvider: { type: "Type<DfTableProvider>", description: Resolver for table.source. }
+          maxLengthMode: { type: "'weighted' | 'chars'", default: weighted, description: "How validation.maxLength counts: with weighted, ñ and accented letters count as 2." }
+          currency: { type: "{ code?, numberFormat?, wordsLanguage?, amountInWords?, wordsUppercase? }", default: "{ code: EUR, numberFormat: es }", description: "Defaults for type currency fields. An invalid value throws an error at startup." }
+
+    themes:
+      PLAIN_THEME: "Dependency-free theme with its own SCSS styles (styles/plain.scss)."
+      materialTheme(providers): "Maps types to @ngx-formly/material. The app provides importProvidersFrom(FormlyMaterialModule)."
+      bootstrapTheme(providers): "Maps types to @ngx-formly/bootstrap."
+      custom: "Any DfTheme object { name, typeMap, fieldWrappers?, groupWrapper?, providers?, formlyConfig?, hostClass?, typeProps? }."
+
+    services:
+      FormSchemaAdapterService:
+        toFormly(schema): "FormlyFieldConfig[] — validates, sanitizes and transforms."
+        sanitize(schema): DfFormSchema
+      SchemaValidatorService:
+        validate(schema): "{ valid: boolean; errors: DfSchemaIssue[] }"
+      ValidatorRegistryService:
+        register(definition): void
+        get(name): "DfValidatorDefinition | undefined"
+        has(name): boolean
+      ConditionEvaluatorService:
+        evaluate(rule, model): boolean
+
+    tokens:
+      DYNAMIC_FORMS_CONFIG: "InjectionToken<DfResolvedConfig> ({ theme, defaultResetOnHide, strictSchema, maxLengthMode, currency } already resolved)"
+      DF_VALIDATORS: "InjectionToken<DfValidatorDefinition[][]> (multi: each provider contributes an array)"
+      DF_OPTIONS_PROVIDER: "InjectionToken<DfOptionsProvider>"
+      DF_TABLE_PROVIDER: "InjectionToken<DfTableProvider>"
+
+    types:
+      - DfFormSchema
+      - DfField
+      - DfGroup
+      - DfArray
+      - DfTable
+      - DfOption
+      - DfOptionsSource
+      - DfValidation
+      - DfValidatorRef
+      - DfConditionalLogic
+      - DfRule
+      - DfCondition
+      - DfSubmitEvent
+      - DfTheme
+      - DfValidatorDefinition
+      - DfOptionsProvider
+      - DfTableProvider
+      - DfTableSource
+      - DfTableRequest
+      - DfTablePage
+      - DynamicFormsConfig
+      - DynamicFormsSchemaError
+
+# -----------------------------------------------------------------------------
+# Minimal example conforming to the contract
+# -----------------------------------------------------------------------------
+examples:
+  minimal:
+    version: "1.0"
+    id: contacto
+    fields:
+      - key: nombre
+        type: text
+        label: Nombre
+        validation: { required: true, maxLength: 80 }
+      - key: documento
+        type: text
+        label: DNI/NIE
+        validation:
+          required: true
+          validators: [{ name: dniNie }]
+      - key: tipo
+        type: select
+        label: Tipo
+        options: [{ value: "a", label: "A" }, { value: "b", label: "B" }]
+      - key: detalleB
+        type: textarea
+        label: Detalle
+        logic:
+          showWhen: { field: tipo, operator: eq, value: "b" }
+          requiredWhen: { field: tipo, operator: eq, value: "b" }
+          resetOnHide: true

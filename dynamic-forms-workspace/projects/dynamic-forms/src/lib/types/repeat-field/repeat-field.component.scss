@@ -1,0 +1,161 @@
+:host {
+  display: block;
+}
+
+.df-repeat {
+  margin-bottom: var(--df-field-gap);
+
+  &__title {
+    font-weight: 600;
+    color: var(--df-color-text);
+    margin-bottom: 0.25rem;
+  }
+
+  &__description {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--df-color-muted);
+  }
+
+  &__row {
+    border: 1px solid var(--df-color-border);
+    border-radius: var(--df-radius);
+    background: var(--df-color-surface);
+    padding: 0.75rem 1rem 0;
+    margin-bottom: 0.75rem;
+    min-width: 0;
+  }
+
+  &__row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  &__row-title {
+    font-weight: 600;
+    font-size: var(--df-label-size);
+  }
+
+  &__remove,
+  &__add {
+    cursor: pointer;
+    border: 1px solid var(--df-color-border);
+    border-radius: var(--df-radius);
+    background: var(--df-color-surface);
+    color: var(--df-color-text);
+    padding: 0.35rem 0.75rem;
+    font: inherit;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__remove {
+    color: var(--df-color-danger);
+  }
+
+  &__totals {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem 1.5rem;
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0.25rem 0;
+    border-top: 1px solid var(--df-color-border);
+  }
+
+  &__total {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+
+    dt {
+      font-size: var(--df-label-size);
+      color: var(--df-color-muted);
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+      color: var(--df-color-text);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__error {
+    margin-top: 0.35rem;
+  }
+
+  // Disposición tabla: sin tarjeta, cabecera de columnas y una línea por fila.
+  &--table &__head,
+  &--table &__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.25rem;
+    column-gap: var(--df-grid-gap);
+  }
+
+  // En un contenedor estrecho las columnas no se aplastan: la tabla conserva su ancho mínimo y se desplaza.
+  &--table {
+    overflow-x: auto;
+  }
+
+  &--table &__head,
+  &--table &__row {
+    min-width: var(--df-table-min, 0);
+  }
+
+  &--table &__head {
+    margin-bottom: 0.35rem;
+  }
+
+  &--table &__row {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    margin-bottom: 0;
+    align-items: start;
+  }
+
+  &__cols {
+    display: grid;
+    grid-template-columns: var(--df-table-cols);
+    gap: var(--df-grid-gap);
+  }
+
+  &__th {
+    font-size: var(--df-label-size);
+    font-weight: 600;
+    color: var(--df-color-text);
+  }
+
+  &--table &__remove--icon {
+    padding: 0.35rem 0;
+    line-height: 1.4;
+    margin-top: 0.1rem;
+  }
+
+  // Contenedor estrecho: cada fila pasa a tarjeta con las celdas apiladas (las etiquetas salen de data-label).
+  @container df-form (max-width: 640px) {
+    &--table {
+      overflow-x: visible;
+    }
+
+    &--table &__head {
+      display: none;
+    }
+
+    &--table &__row {
+      min-width: 0;
+      border: 1px solid var(--df-color-border);
+      border-radius: var(--df-radius);
+      background: var(--df-color-surface);
+      padding: 0.75rem 0.75rem 0;
+      margin-bottom: 0.75rem;
+    }
+  }
+}

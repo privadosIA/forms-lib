@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.df-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  &--inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+.df-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--df-color-text);
+
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &__input {
+    accent-color: var(--df-color-primary);
+  }
+}

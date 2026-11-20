@@ -1,0 +1,11 @@
+<section class="viewer">
+  <header class="viewer__header">
+    <span>Modelo</span>
+    <span class="viewer__status" [attr.data-status]="status()">{{ status() }}</span>
+  </header>
+  <pre class="viewer__pre">{{ model() | json }}</pre>
+  @if (lastSubmit()) {
+    <header class="viewer__header">Último submit</header>
+    <pre class="viewer__pre viewer__pre--ok">{{ lastSubmit() | json }}</pre>
+  }
+</section>

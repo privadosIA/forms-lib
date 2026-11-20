@@ -1,0 +1,9 @@
+// Tema "bootstrap": requiere bootstrap.css cargado por la app; aquí solo rejilla + tokens.
+@use 'tokens';
+@use 'grid';
+@use 'badge';
+
+// Tokens con especificidad 0 (:where): un `.df-form { --df-color-primary: … }` de la app gana sin `.df-form.df-form`.
+:where(.df-form.df-theme-bootstrap) {
+  @include tokens.df-tokens;
+}

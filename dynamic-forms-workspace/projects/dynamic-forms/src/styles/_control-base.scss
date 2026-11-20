@@ -1,0 +1,29 @@
+// Mixin compartido por los componentes de tipo (input/select/textarea).
+@mixin df-control-base {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--df-control-padding);
+  font: var(--df-font);
+  font-size: 0.95rem;
+  color: var(--df-color-text);
+  background: var(--df-color-surface);
+  border: 1px solid var(--df-color-border);
+  border-radius: var(--df-radius);
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--df-color-primary);
+    box-shadow: 0 0 0 3px var(--df-color-focus);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--df-color-danger);
+  }
+
+  &:disabled,
+  &[readonly] {
+    background: color-mix(in srgb, var(--df-color-surface) 85%, var(--df-color-border));
+    cursor: not-allowed;
+  }
+}

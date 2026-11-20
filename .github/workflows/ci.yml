@@ -1,0 +1,49 @@
+name: CI
+
+# Sin filtro de ramas: corre en cualquier push y en los PR.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Lint, tests y build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dynamic-forms-workspace
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dynamic-forms-workspace/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests (Vitest + jsdom, con cobertura)
+        run: npm run test:ci
+
+      - name: Build (librería + demo)
+        run: npm run build
+
+      - name: Publicar cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: dynamic-forms-workspace/coverage/dynamic-forms
+          if-no-files-found: ignore

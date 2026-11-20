@@ -1,0 +1,179 @@
+{
+  "version": "1.0",
+  "id": "solicitud",
+  "title": "Solicitud de alta",
+  "description": "Escenario 1: campos dependientes, obligatoriedad condicional y selects en cascada.",
+  "fields": [
+    { "key": "procesoId", "type": "hidden", "defaultValue": "APPIAN-PROC-0042" },
+    {
+      "type": "group",
+      "id": "solicitante",
+      "title": "Solicitante",
+      "columns": 2,
+      "fields": [
+        {
+          "key": "tipoSolicitante",
+          "type": "select",
+          "label": "Tipo de solicitante",
+          "validation": { "required": true },
+          "options": [
+            { "value": "fisica", "label": "Persona física" },
+            { "value": "juridica", "label": "Persona jurídica" },
+            { "value": "representante", "label": "Representante legal" }
+          ]
+        },
+        {
+          "key": "documento",
+          "type": "text",
+          "label": "DNI / NIE",
+          "placeholder": "12345678Z",
+          "validation": { "validators": [{ "name": "dniNie" }] },
+          "logic": {
+            "showWhen": { "field": "tipoSolicitante", "operator": "in", "value": ["fisica", "representante"] },
+            "requiredWhen": { "field": "tipoSolicitante", "operator": "in", "value": ["fisica", "representante"] },
+            "resetOnHide": true
+          }
+        },
+        {
+          "key": "cif",
+          "type": "text",
+          "label": "CIF",
+          "placeholder": "B12345674",
+          "validation": { "validators": [{ "name": "cif" }] },
+          "logic": {
+            "showWhen": { "field": "tipoSolicitante", "operator": "eq", "value": "juridica" },
+            "requiredWhen": { "field": "tipoSolicitante", "operator": "eq", "value": "juridica" },
+            "resetOnHide": true
+          }
+        },
+        {
+          "key": "razonSocial",
+          "type": "text",
+          "label": "Razón social",
+          "layout": { "col": 12 },
+          "validation": { "maxLength": 120 },
+          "logic": {
+            "showWhen": { "field": "tipoSolicitante", "operator": "eq", "value": "juridica" },
+            "requiredWhen": { "field": "tipoSolicitante", "operator": "eq", "value": "juridica" }
+          }
+        },
+        {
+          "key": "poderNotarial",
+          "type": "text",
+          "label": "Nº protocolo del poder",
+          "description": "Solo para representantes legales.",
+          "layout": { "col": 12 },
+          "logic": {
+            "showWhen": { "field": "tipoSolicitante", "operator": "eq", "value": "representante" },
+            "requiredWhen": { "field": "tipoSolicitante", "operator": "eq", "value": "representante" }
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "domicilio",
+      "title": "Domicilio",
+      "columns": 2,
+      "fields": [
+        {
+          "key": "provincia",
+          "type": "select",
+          "label": "Provincia",
+          "validation": { "required": true },
+          "options": [
+            { "value": "28", "label": "Madrid" },
+            { "value": "08", "label": "Barcelona" },
+            { "value": "41", "label": "Sevilla" }
+          ]
+        },
+        {
+          "key": "municipio",
+          "type": "select",
+          "label": "Municipio",
+          "validation": { "required": true },
+          "options": {
+            "source": "dependent",
+            "dependsOn": "provincia",
+            "map": {
+              "28": [
+                { "value": "28079", "label": "Madrid" },
+                { "value": "28006", "label": "Alcalá de Henares" },
+                { "value": "28065", "label": "Getafe" }
+              ],
+              "08": [
+                { "value": "08019", "label": "Barcelona" },
+                { "value": "08101", "label": "L'Hospitalet" }
+              ],
+              "41": [
+                { "value": "41091", "label": "Sevilla" },
+                { "value": "41038", "label": "Dos Hermanas" }
+              ]
+            }
+          }
+        },
+        {
+          "key": "codigoPostal",
+          "type": "text",
+          "label": "Código postal",
+          "validation": { "required": true, "validators": [{ "name": "postalCodeES" }] }
+        },
+        {
+          "key": "barrio",
+          "type": "select",
+          "label": "Barrio (remoto)",
+          "description": "options.source = remote, resuelto por DemoOptionsProvider.",
+          "options": { "source": "remote", "endpoint": "/api/barrios", "dependsOn": ["municipio"] }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "notificaciones",
+      "title": "Notificaciones",
+      "columns": 2,
+      "fields": [
+        {
+          "key": "canal",
+          "type": "radio",
+          "label": "Canal de notificación",
+          "defaultValue": "electronico",
+          "props": { "inline": true },
+          "options": [
+            { "value": "electronico", "label": "Electrónico" },
+            { "value": "postal", "label": "Postal" }
+          ]
+        },
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email de aviso",
+          "logic": {
+            "showWhen": { "field": "canal", "operator": "eq", "value": "electronico" },
+            "requiredWhen": { "field": "canal", "operator": "eq", "value": "electronico" }
+          }
+        },
+        {
+          "key": "direccionPostal",
+          "type": "textarea",
+          "label": "Dirección postal completa",
+          "layout": { "col": 12 },
+          "props": { "rows": 2 },
+          "validation": { "maxLength": 250 },
+          "logic": {
+            "showWhen": { "field": "canal", "operator": "eq", "value": "postal" },
+            "requiredWhen": { "field": "canal", "operator": "eq", "value": "postal" }
+          }
+        },
+        {
+          "key": "acepta",
+          "type": "checkbox",
+          "label": "He leído y acepto las condiciones",
+          "layout": { "col": 12 },
+          "validation": { "required": true, "messages": { "required": "Debes aceptar las condiciones" } }
+        }
+      ]
+    }
+  ],
+  "meta": { "appianProcessModel": "SolicitudAlta", "source": "demo" }
+}

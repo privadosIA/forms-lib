@@ -1,0 +1,9 @@
+<fieldset class="df-group" [class]="props['cssClass']" [attr.data-group-id]="props['groupId']">
+  @if (props['title']) {
+    <legend class="df-group__title">{{ props['title'] }}</legend>
+  }
+  @if (props['description']) {
+    <p class="df-group__description">{{ props['description'] }}</p>
+  }
+  <ng-container #fieldComponent></ng-container>
+</fieldset>

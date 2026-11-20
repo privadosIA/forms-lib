@@ -1,0 +1,116 @@
+{
+  "version": "1.0",
+  "id": "altaUsuario",
+  "title": "Alta de usuario",
+  "description": "Escenario 2: validadores de negocio (DNI/NIE, IBAN, teléfono) y validación asíncrona contra el backend.",
+  "layout": { "columns": 12 },
+  "fields": [
+    {
+      "type": "group",
+      "id": "identidad",
+      "title": "Identidad",
+      "columns": 2,
+      "fields": [
+        {
+          "key": "nif",
+          "type": "text",
+          "label": "DNI / NIE",
+          "placeholder": "12345678Z o X1234567L",
+          "description": "Sync: letra de control. Async: el backend comprueba que no exista ya (prueba 12345678Z).",
+          "validation": {
+            "required": true,
+            "validators": [{ "name": "dniNie" }],
+            "asyncValidators": [{ "name": "nifDisponible", "args": { "endpoint": "/api/usuarios/existe" } }]
+          }
+        },
+        {
+          "key": "nombre",
+          "type": "text",
+          "label": "Nombre",
+          "validation": { "required": true, "minLength": 2, "maxLength": 60 }
+        },
+        {
+          "key": "fechaNacimiento",
+          "type": "date",
+          "label": "Fecha de nacimiento",
+          "validation": { "required": true, "validators": [{ "name": "mayorDeEdad", "args": { "edad": 18 } }] }
+        },
+        {
+          "key": "telefono",
+          "type": "text",
+          "label": "Teléfono",
+          "validation": { "validators": [{ "name": "phoneES" }] }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "acceso",
+      "title": "Acceso",
+      "columns": 2,
+      "fields": [
+        {
+          "key": "password",
+          "type": "password",
+          "label": "Contraseña",
+          "validation": {
+            "required": true,
+            "minLength": 8,
+            "pattern": "^(?=.*[A-Z])(?=.*\\d).+$",
+            "messages": { "pattern": "Debe incluir una mayúscula y un número" }
+          }
+        },
+        {
+          "key": "password2",
+          "type": "password",
+          "label": "Repite la contraseña",
+          "validation": {
+            "required": true,
+            "validators": [{ "name": "matchesField", "args": { "field": "password" }, "message": "Las contraseñas no coinciden" }]
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "pago",
+      "title": "Datos bancarios",
+      "fields": [
+        {
+          "key": "iban",
+          "type": "text",
+          "label": "IBAN",
+          "placeholder": "ES91 2100 0418 4502 0005 1332",
+          "layout": { "col": 12 },
+          "validation": { "validators": [{ "name": "iban" }] }
+        },
+        {
+          "key": "importe",
+          "type": "currency",
+          "label": "Importe mensual (€)",
+          "placeholder": "0,00 €",
+          "description": "Coma decimal y hasta 2 decimales (p. ej. 1.250,50). Debajo se escribe en letra.",
+          "layout": { "col": 6 },
+          "validation": { "min": 0, "max": 5000 }
+        },
+        {
+          "key": "importeReinoUnido",
+          "type": "currency",
+          "label": "Amount (UK)",
+          "placeholder": "£0.00",
+          "description": "Libras en formato inglés (1,500.75); la letra sale en inglés.",
+          "layout": { "col": 6 },
+          "props": { "currency": "GBP", "numberFormat": "en" }
+        },
+        {
+          "key": "concepto",
+          "type": "textarea",
+          "label": "Concepto del pago",
+          "layout": { "col": 12 },
+          "props": { "rows": 3 },
+          "validation": { "maxLength": 200 }
+        }
+      ]
+    }
+  ]
+}

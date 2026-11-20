@@ -1,0 +1,19 @@
+<textarea
+  class="df-control df-textarea"
+  [rows]="rows"
+  [formControl]="formControl"
+  [formlyAttributes]="field"
+  [readonly]="props.readonly === true"
+  [attr.maxlength]="props.maxLength"
+  [dfMaxLength]="props.maxLength"
+  [dfMaxLengthMode]="mode"
+  [attr.aria-invalid]="showError"
+  [attr.aria-describedby]="maxLength ? id + '-counter' : null"></textarea>
+@if (maxLength) {
+  <div class="df-counter" [class.df-counter--limit]="length >= maxLength" [id]="id + '-counter'">
+    {{ length }}/{{ maxLength }}
+  </div>
+  @if (length >= maxLength) {
+    <span class="df-sr-only" role="status">Has llegado al máximo de {{ maxLength }} caracteres</span>
+  }
+}

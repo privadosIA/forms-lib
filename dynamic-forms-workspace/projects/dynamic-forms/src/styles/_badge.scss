@@ -1,0 +1,26 @@
+// Insignias de estado para las celdas de tabla con `html: true`:
+// <span class="df-badge df-badge--ok">Activo</span>. Es global porque el HTML inyectado con [innerHTML]
+// queda fuera del encapsulado del componente.
+.df-form {
+  .df-badge {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    color: var(--df-badge-color, var(--df-color-muted));
+    background: var(--df-badge-bg, #eef0f2);
+  }
+
+  .df-badge--ok { --df-badge-color: #116329; --df-badge-bg: #dafbe1; }
+  .df-badge--warn { --df-badge-color: #7d4e00; --df-badge-bg: #fff8c5; }
+  .df-badge--error { --df-badge-color: #a40e26; --df-badge-bg: #ffebe9; }
+  .df-badge--info { --df-badge-color: #0550ae; --df-badge-bg: #ddf4ff; }
+
+  td a {
+    color: var(--df-color-primary);
+  }
+}
